@@ -1,4 +1,3 @@
-from flask import Blueprint, request, jsonify
 import os
 import hashlib
 import magic
@@ -8,61 +7,7 @@ import re
 from datetime import datetime
 import subprocess
 import json
-
-main = Blueprint('main', __name__)
-
-UPLOAD_FOLDER = 'uploads'
-RULES_FOLDER = 'rules'
-if not os.path.exists(UPLOAD_FOLDER):
-    os.makedirs(UPLOAD_FOLDER)
-if not os.path.exists(RULES_FOLDER):
-    os.makedirs(RULES_FOLDER)
-
-# YARA规则文件路径
-YARA_RULES_PATH = os.path.join(RULES_FOLDER, 'rules.yar')
-# SIGMA规则文件路径
-SIGMA_RULES_PATH = os.path.join(RULES_FOLDER, 'rules.yml')
-
-@main.route('/api/analyze', methods=['POST'])
-def analyze_file():
-    if 'file' not in request.files:
-        return jsonify({'error': '没有上传文件'}), 400
-    
-    file = request.files['file']
-    if file.filename == '':
-        return jsonify({'error': '没有选择文件'}), 400
-    
-    # 保存文件
-    filepath = os.path.join(UPLOAD_FOLDER, file.filename)
-    file.save(filepath)
-    
-    # 基础信息分析
-    basic_info = get_basic_info(filepath)
-    
-    # PE文件分析
-    pe_info = {}
-    if basic_info['file_type'].startswith('PE'):
-        pe_info = analyze_pe(filepath)
-    
-    # YARA规则匹配
-    yara_matches = analyze_yara(filepath)
-    
-    # SIGMA规则匹配
-    sigma_matches = analyze_sigma(filepath)
-    
-    # 字符串分析
-    string_info = analyze_strings(filepath)
-    
-    # 返回分析结果
-    result = {
-        'basic_info': basic_info,
-        'pe_info': pe_info,
-        'yara_matches': yara_matches,
-        'sigma_matches': sigma_matches,
-        'string_info': string_info
-    }
-    
-    return jsonify(result)
+from app.config import Config
 
 def get_basic_info(filepath):
     """获取文件基础信息"""
@@ -132,10 +77,10 @@ def analyze_pe(filepath):
 def analyze_yara(filepath):
     """YARA规则匹配分析"""
     try:
-        if not os.path.exists(YARA_RULES_PATH):
+        if not os.path.exists(Config.YARA_RULES_PATH):
             return {'error': 'YARA规则文件不存在'}
             
-        rules = yara.compile(YARA_RULES_PATH)
+        rules = yara.compile(Config.YARA_RULES_PATH)
         matches = rules.match(filepath)
         
         return [{
@@ -154,11 +99,11 @@ def analyze_yara(filepath):
 def analyze_sigma(filepath):
     """SIGMA规则匹配分析"""
     try:
-        if not os.path.exists(SIGMA_RULES_PATH):
+        if not os.path.exists(Config.SIGMA_RULES_PATH):
             return {'error': 'SIGMA规则文件不存在'}
             
         # 使用sigma-cli工具进行规则匹配
-        cmd = ['sigma-cli', 'scan', '-r', SIGMA_RULES_PATH, filepath]
+        cmd = ['sigma-cli', 'scan', '-r', Config.SIGMA_RULES_PATH, filepath]
         result = subprocess.run(cmd, capture_output=True, text=True)
         
         if result.returncode == 0:
@@ -205,4 +150,31 @@ def analyze_strings(filepath):
             'unicode_strings': unicode_strings
         }
     except Exception as e:
-        return {'error': str(e)} 
+        return {'error': str(e)}
+
+def analyze_file(filepath):
+    """综合分析文件"""
+    basic_info = get_basic_info(filepath)
+    
+    pe_info = {}
+    if basic_info['file_type'].startswith('PE'):
+        pe_info = analyze_pe(filepath)
+    
+    yara_matches = analyze_yara(filepath)
+    
+    sigma_matches = analyze_sigma(filepath)
+    
+    string_info = analyze_strings(filepath)
+    
+    result = {
+        'basic_info': basic_info,
+        'pe_info': pe_info,
+        'yara_matches': yara_matches,
+        'sigma_matches': sigma_matches,
+        'string_info': string_info
+    }
+
+    return result
+
+
+

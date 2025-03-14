@@ -5,5 +5,7 @@ yara-python
 pefile
 pyexiftool
 requests
-yara-python
 sigma-cli
+python-dotenv==1.0.1
+pyyaml
+subprocess32
