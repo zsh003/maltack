@@ -5,3 +5,5 @@ yara-python
 pefile
 pyexiftool
 requests
+yara-python
+sigma-cli
