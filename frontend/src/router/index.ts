@@ -1,20 +1,28 @@
-import { createRouter, createWebHistory } from 'vue-router';
-import HomeView from '../views/HomeView.vue'
+// router/index.ts
+import { createRouter, createWebHistory } from 'vue-router'
+import UploadView from '../views/UploadView.vue'
+import AnalysisView from '../views/AnalysisView.vue'
 
 const routes = [
-    {
-        path: '/',
-        name: 'Home',
-        component: HomeView,
-    },
-];
+  // {
+  //   path: '/',
+  //   redirect: '/',
+  // },
+  {
+    path: '/upload',
+    name: 'Upload',
+    component: UploadView,
+  },
+  {
+    path: '/analysis',
+    name: 'Analysis',
+    component: AnalysisView,
+  },
+]
 
 const router = createRouter({
-    history: createWebHistory(),
-    routes,
-});
+  history: createWebHistory(),
+  routes,
+})
 
-export default router;
-
-
-
+export default router

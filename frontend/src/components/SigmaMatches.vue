@@ -1,9 +1,6 @@
 <template>
   <a-collapse>
-    <a-collapse-panel
-        v-for="(match, index) in data"
-        :key="index"
-        :header="match.title">
+    <a-collapse-panel v-for="(match, index) in data" :key="index" :header="match.title">
       <a-descriptions bordered>
         <a-descriptions-item label="ID" :span="3">
           {{ match.id }}
@@ -27,31 +24,32 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue';
+import { computed } from 'vue'
 
-defineProps<{ data: Array<{
-    id: string;
-    title: string;
-    description: string;
-    level: string;
-    tags: string[];
-  }> | undefined }>();
+defineProps<{
+  data:
+    | Array<{
+        id: string
+        title: string
+        description: string
+        level: string
+        tags: string[]
+      }>
+    | undefined
+}>()
 
 const getSigmaLevelType = computed(() => (level: string) => {
   switch (level.toLowerCase()) {
     case 'critical':
-      return 'error';
+      return 'error'
     case 'high':
-      return 'warning';
+      return 'warning'
     case 'medium':
-      return 'processing';
+      return 'processing'
     case 'low':
-      return 'success';
+      return 'success'
     default:
-      return 'default';
+      return 'default'
   }
-});
+})
 </script>
-
-
-

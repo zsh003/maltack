@@ -1,7 +1,21 @@
 {
   "files": [],
   "references": [
-    { "path": "./tsconfig.app.json" },
-    { "path": "./tsconfig.node.json" }
-  ]
+    {
+      "path": "./tsconfig.node.json"
+    },
+    {
+      "path": "./tsconfig.app.json"
+    },
+    {
+      "path": "./tsconfig.vitest.json"
+    }
+  ],
+  "compilerOptions": {
+    "esModuleInterop": true,   //启用 esModuleInterop 是为了更好地处理 CommonJS 模块和 ES 模块之间的兼容性问题
+    "strict": false,  //启用 strict 模式会同时启用 TypeScript 的所有严格类型检查选项
+    "noImplicitAny": false, //解决引入第三方库时，出现了该模块无定义文件的问题  " implicitly has an any type. "
+    "allowJs": true
+  },
+
 }
