@@ -1,28 +1,28 @@
 <template>
-  <BasicLayout />
+  <a-config-provider :locale="locale">
+    <div id="app">
+      <router-view/>
+    </div>
+  </a-config-provider>
 </template>
 
-<script setup lang="ts">
-import BasicLayout from './layouts/BasicLayout.vue'
+<script>
+import { domTitle, setDocumentTitle } from '@/utils/domUtil'
+import { i18nRender } from '@/locales'
 
-// const BasicLayout = require('./layouts/BasicLayout.vue');
+export default {
+  data () {
+    return {
+    }
+  },
+  computed: {
+    locale () {
+      // 只是为了切换语言时，更新标题
+      const { title } = this.$route.meta
+      title && (setDocumentTitle(`${i18nRender(title)} - ${domTitle}`))
+
+      return this.$i18n.getLocaleMessage(this.$store.getters.lang).antLocale
+    }
+  }
+}
 </script>
-
-<style>
-/* 在 App.vue 的 <style> 标签内 */
-#app {
-  font-family: 'Inter', sans-serif; /* 更现代的字体 */
-  color: #1a1a1a; /* 深色文字更易读 */
-  padding: 24px; /* 内容与边缘保持距离 */
-}
-
-/* 新增全局间距类 */
-.gap-md {
-  gap: 24px;
-}
-
-/* 优化标签间距 */
-.tag-margin {
-  margin-right: 12px; /* 减少间距，避免过宽 */
-}
-</style>
