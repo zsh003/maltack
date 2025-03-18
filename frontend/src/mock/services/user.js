@@ -612,7 +612,7 @@ const userNav = options => {
         title: 'menu.list.search-list',
         show: true
       },
-      redirect: '/list/search/article',
+      redirect: '/list/result/article',
       component: 'SearchLayout'
     },
     {

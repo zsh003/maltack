@@ -9,9 +9,8 @@ python run.py
 frontend:
 
 ```bash
-cd frontend
-npm install
-npm run dev
+yarn install # 安装依赖
+yarn run serve # 开发模式运行
+yarn run build # 编译项目
+yarn run lint # Lints and fixes files
 ```
-
-

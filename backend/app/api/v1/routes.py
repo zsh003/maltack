@@ -1,6 +1,7 @@
 from flask import jsonify, Blueprint
 from .controllers import get_hello_v1
 from app.services.analysis import analyze_file
+import app.config as Config
 import os
 
 api_v1 = Blueprint('api_v1_bp', __name__)
@@ -21,11 +22,13 @@ def api_analyze_file():
     if file.filename == '':
         return jsonify({'error': '没有选择文件'}), 400
     
-    # 保存文件
-    filepath = os.path.join(os.getcwd(), 'uploads', file.filename)
-    file.save(filepath)
-    
-    # 分析文件
-    result = analyze_file(filepath)
+    try:
+        # 保存文件并分析
+        filepath = os.path.join(Config.UPLOAD_FOLDER, file.filename)
+        file.save(filepath)
+        result = analyze_file(filepath)
+        return jsonify({'success': True, 'data': result})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
     
     return jsonify(result)

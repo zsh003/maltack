@@ -15,15 +15,6 @@ export const asyncRouterMap = [
     meta: { title: 'menu.home' },
     redirect: '/dashboard/workplace',
     children: [
-      // test
-      {
-        path: 'https://pro.loacg.com/docs/getting-started',
-        name: 'docs',
-        meta: {
-          title: 'menu.test',
-          target: '_blank' // 打开到新窗口
-        }
-      },
       // dashboard
       {
         path: '/dashboard',
@@ -45,6 +36,54 @@ export const asyncRouterMap = [
             meta: { title: 'menu.dashboard.workplace', keepAlive: true, permission: ['dashboard'] }
           }
         ]
+      },
+      // analysis
+      {
+        path: '/analysis',
+        name: 'Analysis',
+        component: () => import('@/views/analysis/ResultLayout.vue'),
+        redirect: '/analysis/result/article',
+        meta: { title: '分析结果', keepAlive: true, icon: 'profile', permission: ['table'] },
+        children: [
+          {
+            path: '/analysis/result/overview',
+            name: 'Overview',
+            component: () => import('../views/analysis/result/Overview'),
+            meta: { title: '总体一览', permission: ['table'] }
+          },
+          {
+            path: '/analysis/result/basic-info',
+            name: 'Basicinfo',
+            component: () => import('../views/analysis/result/BasicInfo.vue'),
+            meta: { title: '文件基本信息', permission: ['table'] }
+          },
+          {
+            path: '/analysis/result/yara-rules',
+            name: 'YaraRules',
+            component: () => import('../views/analysis/result/YaraRules'),
+            meta: { title: 'Yara规则匹配', permission: ['table'] }
+          },
+          {
+            path: '/analysis/result/sigma-rules',
+            name: 'SigmaRules',
+            component: () => import('../views/analysis/result/SigmaRules'),
+            meta: { title: 'Sigma规则匹配', permission: ['table'] }
+          },
+          {
+            path: '/analysis/result/strings',
+            name: 'Strings',
+            component: () => import('../views/analysis/result/Strings'),
+            meta: { title: '字符串分析', permission: ['table'] }
+          }
+        ]
+      },
+      // histories
+      {
+        path: '/histories/:pageNo([1-9]\\d*)?',
+        name: 'Histories',
+        hideChildrenInMenu: true, // 强制显示 MenuItem 而不是 SubMenu
+        component: () => import('@/views/histories/Histories'),
+        meta: { title: '提交历史', icon: 'table', keepAlive: true, permission: ['table'] }
       },
       // rbac
       {
@@ -71,6 +110,72 @@ export const asyncRouterMap = [
             name: 'PermissionList',
             component: () => import('@/views/rbac/PermissionList.vue'),
             meta: { title: '权限列表', keepAlive: true }
+          }
+        ]
+      },
+      // account
+      {
+        path: '/account',
+        component: RouteView,
+        redirect: '/account/center',
+        name: 'account',
+        meta: { title: 'menu.account', icon: 'user', keepAlive: true, permission: ['user'] },
+        children: [
+          {
+            path: '/account/center',
+            name: 'center',
+            component: () => import('@/views/account/center'),
+            meta: { title: 'menu.account.center', keepAlive: true, permission: ['user'] }
+          },
+          {
+            path: '/account/settings',
+            name: 'settings',
+            component: () => import('@/views/account/settings/Index'),
+            meta: { title: 'menu.account.settings', hideHeader: true, permission: ['user'] },
+            redirect: '/account/settings/basic',
+            hideChildrenInMenu: true,
+            children: [
+              {
+                path: '/account/settings/basic',
+                name: 'BasicSettings',
+                component: () => import('@/views/account/settings/BasicSetting'),
+                meta: { title: 'account.settings.menuMap.basic', hidden: true, permission: ['user'] }
+              },
+              {
+                path: '/account/settings/security',
+                name: 'SecuritySettings',
+                component: () => import('@/views/account/settings/Security'),
+                meta: {
+                  title: 'account.settings.menuMap.security',
+                  hidden: true,
+                  keepAlive: true,
+                  permission: ['user']
+                }
+              },
+              {
+                path: '/account/settings/custom',
+                name: 'CustomSettings',
+                component: () => import('@/views/account/settings/Custom'),
+                meta: { title: 'account.settings.menuMap.custom', hidden: true, keepAlive: true, permission: ['user'] }
+              },
+              {
+                path: '/account/settings/binding',
+                name: 'BindingSettings',
+                component: () => import('@/views/account/settings/Binding'),
+                meta: { title: 'account.settings.menuMap.binding', hidden: true, keepAlive: true, permission: ['user'] }
+              },
+              {
+                path: '/account/settings/notification',
+                name: 'NotificationSettings',
+                component: () => import('@/views/account/settings/Notification'),
+                meta: {
+                  title: 'account.settings.menuMap.notification',
+                  hidden: true,
+                  keepAlive: true,
+                  permission: ['user']
+                }
+              }
+            ]
           }
         ]
       },
@@ -127,33 +232,6 @@ export const asyncRouterMap = [
             name: 'CardList',
             component: () => import('@/views/list/CardList'),
             meta: { title: 'menu.list.card-list', keepAlive: true, permission: ['table'] }
-          },
-          {
-            path: '/list/search',
-            name: 'SearchList',
-            component: () => import('@/views/list/search/SearchLayout'),
-            redirect: '/list/search/article',
-            meta: { title: 'menu.list.search-list', keepAlive: true, permission: ['table'] },
-            children: [
-              {
-                path: '/list/search/article',
-                name: 'SearchArticles',
-                component: () => import('../views/list/search/Article'),
-                meta: { title: 'menu.list.search-list.articles', permission: ['table'] }
-              },
-              {
-                path: '/list/search/project',
-                name: 'SearchProjects',
-                component: () => import('../views/list/search/Projects'),
-                meta: { title: 'menu.list.search-list.projects', permission: ['table'] }
-              },
-              {
-                path: '/list/search/application',
-                name: 'SearchApplications',
-                component: () => import('../views/list/search/Applications'),
-                meta: { title: 'menu.list.search-list.applications', permission: ['table'] }
-              }
-            ]
           }
         ]
       },
@@ -231,8 +309,16 @@ export const asyncRouterMap = [
             meta: { title: 'menu.exception.server-error', permission: ['exception'] }
           }
         ]
+      },
+      // test
+      {
+        path: 'https://pro.antdv.com/docs/getting-started',
+        name: 'docs',
+        meta: {
+          title: 'menu.test',
+          target: '_blank' // 打开到新窗口
+        }
       }
-
       // other
       /*
       {

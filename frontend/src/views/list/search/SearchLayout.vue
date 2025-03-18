@@ -20,11 +20,11 @@
 <script>
 const getActiveKey = (path) => {
   switch (path) {
-    case '/list/search/article':
+    case '/list/result/article':
       return '1'
-    case '/list/search/project':
+    case '/list/result/project':
       return '2'
-    case '/list/search/application':
+    case '/list/result/application':
       return '3'
     default:
       return '1'
@@ -55,13 +55,13 @@ export default {
       this.tabActiveKey = key
       switch (key) {
         case '1':
-          this.$router.push('/list/search/article')
+          this.$router.push('/list/result/article')
           break
         case '2':
-          this.$router.push('/list/search/project')
+          this.$router.push('/list/result/project')
           break
         case '3':
-          this.$router.push('/list/search/application')
+          this.$router.push('/list/result/application')
           break
         default:
           this.$router.push('/workplace')

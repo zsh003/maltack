@@ -34,7 +34,7 @@ const GlobalSearch = {
       return null
     }
     return (
-      <div class={'global-search global-search-wrapper'}>
+      <div class={'global-result global-search-wrapper'}>
         <div class={'global-search-box'}>
           <Select
             size={'large'}
