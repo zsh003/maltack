@@ -1,22 +1,12 @@
-@import '~ant-design-vue/es/style/themes/default.less';
-
-//全局样式文件，在这里你可以进行一些通用设置
-//在这个文件内定义的样式会全局污染
-
-html,
-body,
-#app,
-#root {
-  height: 100%;
-}
-
 .colorWeak {
   filter: invert(80%);
 }
 
-.ant-layout.layout-basic {
-  height: 100vh;
+.ant-layout {
   min-height: 100vh;
+}
+.ant-pro-sider.ant-layout-sider.ant-pro-sider-fixed {
+  left: unset;
 }
 
 canvas {
@@ -24,9 +14,9 @@ canvas {
 }
 
 body {
+  text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  text-rendering: optimizelegibility;
 }
 
 ul,
@@ -34,63 +24,15 @@ ol {
   list-style: none;
 }
 
-// 数据列表 样式
-.table-alert {
-  margin-bottom: 16px;
-}
-// 数据列表 操作
-.table-operator {
-  margin-bottom: 18px;
-
-  button {
-    margin-right: 8px;
-  }
-}
-// 数据列表 搜索条件
-.table-page-search-wrapper {
-  .ant-form-inline {
-    .ant-form-item {
-      display: flex;
-      margin-right: 0;
-      margin-bottom: 24px;
-
-      .ant-form-item-control-wrapper {
-        flex: 1 1;
-        display: inline-block;
-        vertical-align: middle;
-      }
-
-      > .ant-form-item-label {
-        width: auto;
-        padding-right: 8px;
-        line-height: 32px;
-      }
-
-      .ant-form-item-control {
-        height: 32px;
-        line-height: 32px;
-      }
-    }
-  }
-
-  .table-page-search-submitButtons {
-    display: block;
-    margin-bottom: 24px;
-    white-space: nowrap;
-  }
-}
-
-@media (max-width: @screen-xs) {
+@media (max-width: 768px) {
   .ant-table {
     width: 100%;
     overflow-x: auto;
-
     &-thead > tr,
     &-tbody > tr {
       > th,
       > td {
         white-space: pre;
-
         > span {
           display: block;
         }
