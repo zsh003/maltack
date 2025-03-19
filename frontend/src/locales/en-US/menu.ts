@@ -9,6 +9,8 @@ export default {
   'menu.register-result': 'Register Result',
   'menu.test': 'test',
   'menu.analysis': 'Analysis',
+  'menu.analysis.sample': 'Sample',
+  'menu.analysis.sample.upload': 'Upload',
   'menu.analysis.result': 'Results',
   'menu.analysis.result.overview': 'Overview',
   'menu.analysis.result.basic-info': 'Basic Info',

@@ -9,25 +9,9 @@ type SearchProps = {
 
 const tabList = [
   {
-    key: 'overview',
-    tab: '结果一览',
-  },
-  {
-    key: 'basic-info',
-    tab: '文件基本信息',
-  },
-  {
-    key: 'yara-rules',
-    tab: 'Yara规则匹配',
-  },
-  {
-    key: 'sigma-rules',
-    tab: 'Sigma规则匹配',
-  },
-  {
-    key: 'strings',
-    tab: '字符串分析',
-  },
+    key: 'upload',
+    tab: '样本上传',
+  }
 ];
 
 const Search: FC<SearchProps> = () => {
@@ -37,20 +21,8 @@ const Search: FC<SearchProps> = () => {
     const url =
       match?.pathname === '/' ? '' : match?.pathname.substring(0, match.pathname.lastIndexOf('/'));
     switch (key) {
-      case 'overview':
-        history.push(`${url}/overview`);
-        break;
-      case 'basic-info':
-        history.push(`${url}/basic-info`);
-        break;
-      case 'yara-rules':
-        history.push(`${url}/yara-rules`);
-        break;
-      case 'sigma-rules':
-        history.push(`${url}/sigma-rules`);
-        break;
-      case 'strings':
-        history.push(`${url}/strings-rules`);
+      case 'upload':
+        history.push(`${url}/upload`);
         break;
       default:
         break;
@@ -67,7 +39,7 @@ const Search: FC<SearchProps> = () => {
     if (tabKey && tabKey !== '/') {
       return tabKey;
     }
-    return 'overview';
+    return 'upload';
   };
 
   return (

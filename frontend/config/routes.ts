@@ -77,10 +77,27 @@ export default [
     path: '/analysis',
     icon: 'table',
     name: 'analysis',
-    route: [
+    routes: [
       {
         path: '/analysis',
-        redirect: '/analysis/result',
+        redirect: '/analysis/sample/upload',
+      },
+      {
+        path: '/analysis/sample',
+        name: 'sample',
+        component: './analysis/sample',
+        routes: [
+          {
+            path: '/analysis/sample',
+            redirect: '/analysis/sample/upload',
+          },
+          {
+            path: '/analysis/sample/upload',
+            name: 'upload',
+            icon: 'smile',
+            component: './analysis/sample/upload',
+          },
+        ]
       },
       {
         path: '/analysis/result',
@@ -119,7 +136,7 @@ export default [
             path: '/analysis/result/strings',
             name: '字符串分析',
             icon: 'smile',
-            component: '/analysis/result/strings'
+            component: './analysis/result/strings'
           }
         ]
       }

@@ -8,26 +8,26 @@ const Footer: React.FC = () => {
       style={{
         background: 'none',
       }}
-      copyright="Powered by Ant Desgin"
+      copyright="Powered by zsh003"
       links={[
         {
-          key: 'Ant Design Pro',
-          title: 'Ant Design Pro',
-          href: 'https://pro.ant.design',
+          key: 'Author',
+          title: 'Github',
+          href: 'https://github.com/zsh003',
           blankTarget: true,
         },
         {
           key: 'github',
           title: <GithubOutlined />,
-          href: 'https://github.com/ant-design/ant-design-pro',
+          href: 'https://github.com/zsh003/maltack',
           blankTarget: true,
         },
         {
-          key: 'Ant Design',
-          title: 'Ant Design',
-          href: 'https://ant.design',
+          key: 'Maltact',
+          title: 'Maltact',
+          href: 'https://github.com/zsh003/maltack',
           blankTarget: true,
-        },
+        }
       ]}
     />
   );
