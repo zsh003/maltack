@@ -21,6 +21,7 @@ import { createStyles } from 'antd-style';
 import React, { useState } from 'react';
 import { flushSync } from 'react-dom';
 import Settings from '../../../../config/defaultSettings';
+import request from 'umi-request';
 
 const useStyles = createStyles(({ token }) => {
   return {
@@ -103,14 +104,19 @@ const Login: React.FC = () => {
   const intl = useIntl();
 
   const fetchUserInfo = async () => {
-    const userInfo = await initialState?.fetchUserInfo?.();
-    if (userInfo) {
-      flushSync(() => {
-        setInitialState((s) => ({
-          ...s,
-          currentUser: userInfo,
-        }));
-      });
+    try {
+      const userInfo = await initialState?.fetchUserInfo?.();
+      // const userInfo = await request('https://localhost:5000/api/v1/userinfo');
+      if (userInfo) {
+        flushSync(() => {
+          setInitialState((s) => ({
+            ...s,
+            currentUser: userInfo,
+          }));
+        });
+      }
+    } catch (error) {
+      console.error('Failed to fetch user info:', error);
     }
   };
 
@@ -118,6 +124,10 @@ const Login: React.FC = () => {
     try {
       // 登录
       const msg = await login({ ...values, type });
+      // const msg = await request('https://localhost:5000/api/v1/login', {
+      //   method: 'POST',
+      //   data: values,
+      // });
       if (msg.status === 'ok') {
         const defaultLoginSuccessMessage = intl.formatMessage({
           id: 'pages.login.success',
@@ -181,7 +191,7 @@ const Login: React.FC = () => {
             <ActionIcons key="icons" />,
           ]}
           onFinish={async (values) => {
-            await handleSubmit(values as API.LoginParams);
+            await handleSubmit(values);
           }}
         >
           <Tabs

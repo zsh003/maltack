@@ -128,13 +128,13 @@ export default [
           },
           {
             path: '/analysis/result/sigma-rules',
-            name: 'Sigma规则匹配',
+            name: 'sigma-rules',
             icon: 'smile',
             component: './analysis/result/sigma-rules'
           },
           {
             path: '/analysis/result/strings',
-            name: '字符串分析',
+            name: 'strings',
             icon: 'smile',
             component: './analysis/result/strings'
           }

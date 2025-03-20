@@ -1,6 +1,9 @@
-flask
+flask==2.2.5
+flask-sqlalchemy==3.1.1
+flask-migrate==4.1.0
 flask-cors
-python-magic
+python-magic-bin==0.4.14
+pymysql==1.1.1
 yara-python
 pefile
 pyexiftool
