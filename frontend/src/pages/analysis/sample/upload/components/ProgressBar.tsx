@@ -6,7 +6,8 @@ interface ProgressBarProps {
 }
 
 const ProgressBar: React.FC<ProgressBarProps> = ({ progress }) => {
-  return <Progress percent={progress} status={progress === 100 ? 'success' : 'active'} />;
+  const status = progress === 100 ? 'success' : progress > 0 ? 'active' : 'normal';
+  return <Progress percent={progress} status={status} strokeWidth={8} />;
 };
 
 export default ProgressBar;

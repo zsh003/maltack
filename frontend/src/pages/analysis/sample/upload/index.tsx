@@ -9,7 +9,7 @@ const Home = () => {
   useEffect(() => {
     const fetchHistory = async () => {
       try {
-        const { data } = await axios.get('/v1/upload_history');
+        const { data } = await axios.get('http://localhost:5000/api/v1/upload_history');
         setHistory(data.upload_history);
       } catch (error) {
         console.error('获取上传历史失败', error);

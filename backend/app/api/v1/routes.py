@@ -90,7 +90,6 @@ def api_analyze_file():
 
 @api_v1.route('/upload_history', methods=['GET'])
 def get_upload_history():
-    app.logger.debug('111')
     uploads = UploadHistory.query.all()
     history = [{
         "file_name": upload.file_name,

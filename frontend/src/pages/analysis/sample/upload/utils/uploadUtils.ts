@@ -19,15 +19,16 @@ export const handleUploadSuccess = (response: any, setIsAnalyzing: (value: boole
     message.success('文件分析完成');
   } else {
     setUploadError('分析失败，请检查文件格式');
-    message.error(setUploadError.toString());
+    message.error('分析失败，请检查文件格式');
   }
 };
 
-export const handleUploadError = ({ file }: { file: any }, setIsAnalyzing: (value: boolean) => void, setUploadLoading: (value: boolean) => void, setUploadError: (value: string | null) => void) => {
+export const handleUploadError = ({ file,}: { file: any; }, setIsAnalyzing: (value: boolean) => void, setUploadLoading: (value: boolean) => void, setUploadError: (value: string | null) => void) => {
   setIsAnalyzing(false);
-  setUploadLoading(false); // 关闭加载状态
-  setUploadError(`上传失败：${file.response?.message || '未知错误'}`);
-  message.error(setUploadError.toString());
+  setUploadLoading(false);
+  const errorMessage = `上传失败：${file.response?.message || '未知错误'}`;
+  setUploadError(errorMessage);
+  message.error(errorMessage);
 };
 
 export const handleUploadChange = (info: any) => {
