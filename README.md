@@ -23,11 +23,6 @@ flask db upgrade
 ```bash
 flask db downgrade
 ```
-查看数据库结构
-```bash
-flask db current  # 查看当前迁移版本
-sqlite3 maltack.db "SELECT * FROM upload_history;"
-```
 
 
 ### frontend

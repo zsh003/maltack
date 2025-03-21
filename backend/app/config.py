@@ -2,7 +2,8 @@ import os
 import logging
 
 # 数据库配置
-HOST = '127.0.0.1'
+#HOST = '127.0.0.1'
+HOST = '172.30.80.1' # WSL
 PORT = 3306
 DATABASE = 'maltack'
 USERNAME = 'maltack'

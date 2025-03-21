@@ -22,6 +22,7 @@ def create_app():
     app.config.from_object(Config)
 
     # 初始化数据库和迁移
+    from .models.model import UploadHistory, BasicInfo, PEInfo, YaraMatch, SigmaMatch, AnalyzeStrings
     db.init_app(app)
     migrate.init_app(app, db)
 

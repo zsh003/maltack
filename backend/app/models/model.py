@@ -19,20 +19,28 @@ class User(db.Model):
 class UploadHistory(db.Model):
     __tablename__ = 'upload_history'
     file_id = db.Column(db.Integer, primary_key=True, nullable=False, autoincrement=True)
-    file_url = db.Column(db.String(200), nullable=False)
+    file_url = db.Column(db.String(200))
     file_name = db.Column(db.String(255), nullable=False)
     file_type = db.Column(db.String(50), nullable=False)
     environment = db.Column(db.String(255), nullable=False)
     upload_time = db.Column(db.DateTime, nullable=False)
-    threat_level = db.Column(db.String(20), default='unknown', nullable=False)
-    status = db.Column(db.String(20), default='pending', nullable=False)
+    threat_level = db.Column(db.String(20), default='-')
+    status = db.Column(db.String(20), nullable=False)
+
+    # uselist=False 表示是一对一关系，这使得你可以从 UploadHistory 实例中直接访问关联的 BasicInfo 等的数据，反之亦然。如果想反之不然，删掉back_populates参数即可。
+    # basic_info = relationship("BasicInfo", uselist=False, back_populates="upload_history")
+    # pe_info = relationship("PEInfo", uselist=False, back_populates="upload_history")
+    # yara_match = relationship("YaraMatch", uselist=False, back_populates="upload_history")
+    # sigma_match = relationship("SigmaMatch", uselist=False, back_populates="upload_history")
+    # analyze_strings = relationship("AnalyzeStrings", uselist=False, back_populates="upload_history")
 
     def __repr__(self):
-        return f'<UploadHistory {self.file_name}>'
+        return f'<UploadHistory {self.file_id}>'
 
-class FileInfo(db.Model):
+class BasicInfo(db.Model):
     __tablename__ = 'basic_info'
-    file_id = Column(Integer, primary_key=True)
+    # ondelete参数支持级联删除，根据upload_history中的情况，如果被删了，这边自动删除
+    file_id = Column(Integer, ForeignKey('upload_history.file_id', ondelete='CASCADE'), primary_key=True)
     file_name = Column(String(255), nullable=False)
     file_size = Column(Float, nullable=False)
     file_type = Column(String(255))
@@ -41,13 +49,13 @@ class FileInfo(db.Model):
     md5 = Column(String(32))
     sha1 = Column(String(40))
     sha256 = Column(String(64))
-    upload_history = relationship("UploadHistory", back_populates="basic_infos")
 
-UploadHistory.basic_info = relationship("FileInfo", uselist=False, back_populates="upload_history")
+    # upload_history = relationship("UploadHistory", back_populates="basic_info")
+
 
 class PEInfo(db.Model):
     __tablename__ = 'pe_info'
-    file_id = Column(Integer, ForeignKey('upload_history.file_id'), primary_key=True)
+    file_id = Column(Integer, ForeignKey('upload_history.file_id', ondelete='CASCADE'), primary_key=True)
     machine_type = Column(String(10))
     timestamp = Column(DateTime)
     subsystem = Column(String(50))
@@ -55,34 +63,29 @@ class PEInfo(db.Model):
     sections = Column(Text) # JSON string or similar for storing complex structures
     imports = Column(Text)
     exports = Column(Text)
-    upload_history = relationship("UploadHistory", back_populates="pe_infos")
-
-UploadHistory.pe_infos = relationship("PEInfo", uselist=False, back_populates="upload_history")
+    # upload_history = relationship("UploadHistory", back_populates="pe_info")
 
 class YaraMatch(db.Model):
     __tablename__ = 'yara_match'
-    file_id = Column(Integer, ForeignKey('upload_history.file_id'), primary_key=True)
+    file_id = Column(Integer, ForeignKey('upload_history.file_id', ondelete='CASCADE'), primary_key=True)
     rule_name = Column(String(255))
     strings = Column(Text)
     tags = Column(Text)
     meta = Column(Text)
-    upload_history = relationship("UploadHistory", back_populates="yara_matches")
+    # upload_history = relationship("UploadHistory", back_populates="yara_match")
 
-UploadHistory.yara_matches = relationship("YaraMatch", uselist=False, back_populates="upload_history")
 
 class SigmaMatch(db.Model):
     __tablename__ = 'sigma_match'
-    file_id = Column(Integer, ForeignKey('upload_history.file_id'), primary_key=True)
+    file_id = Column(Integer, ForeignKey('upload_history.file_id', ondelete='CASCADE'), primary_key=True)
     rule_details = Column(Text)
-    upload_history = relationship("UploadHistory", back_populates="sigma_matches")
+    # upload_history = relationship("UploadHistory", back_populates="sigma_match")
 
-UploadHistory.sigma_matches = relationship("SigmaMatch", uselist=False, back_populates="upload_history")
 
 class AnalyzeStrings(db.Model):
     __tablename__ = 'analyze_strings'
-    file_id = Column(Integer, ForeignKey('upload_history.file_id'), primary_key=True)
+    file_id = Column(Integer, ForeignKey('upload_history.file_id', ondelete='CASCADE'), primary_key=True)
     ascii_strings = Column(Text)
     unicode_strings = Column(Text)
-    upload_history = relationship("UploadHistory", back_populates="analyze_strings")
+    # upload_history = relationship("UploadHistory", back_populates="analyze_strings")
 
-UploadHistory.analyze_strings = relationship("AnalyzeStrings", uselist=False, back_populates="upload_history")

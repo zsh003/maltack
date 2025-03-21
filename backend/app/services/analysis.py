@@ -10,12 +10,20 @@ import json
 from app.config import Config
 
 def get_basic_info(filepath):
+    try:
+        ms = magic.Magic(mime=True)
+        print(1)
+        mime_type = ms.from_file(filepath)
+        print(mime_type)
+    except Exception as e:
+        return {'error': str(e)}
+
     """获取文件基础信息"""
     with open(filepath, 'rb') as f:
         content = f.read()
         
     return {
-        'filename': os.path.basename(filepath),
+        'file_name': os.path.basename(filepath),
         'file_size': os.path.getsize(filepath),
         'file_type': magic.from_file(filepath),
         'mime_type': magic.from_file(filepath, mime=True),

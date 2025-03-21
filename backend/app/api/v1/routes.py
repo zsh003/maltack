@@ -49,8 +49,6 @@ def userinfo():
 
 @api_v1.route('/upload', methods=['POST'])
 def api_analyze_file():
-    app.logger.debug('1')
-    print(2)
     if 'file' not in request.files:
         return jsonify({'error': '没有上传文件'}), 400
     
@@ -59,28 +57,31 @@ def api_analyze_file():
         return jsonify({'error': '没有选择文件'}), 400
     
     try:
-        # 处理文件上传并保存数据库记录
-        file_name = file.filename
-        file_type = file.content_type
-        new_upload = UploadHistory(
-            file_name=file_name,
-            file_type=file_type,
-            environment="Windows 10",
-            upload_time=datetime.utcnow(),
-            status="pending"
-        )
-        db.session.add(new_upload)
-        db.session.commit()
-
         # 保存文件并分析
         filepath = os.path.join(Config.UPLOAD_FOLDER, file.filename)
         file.save(filepath)
         app.logger.debug('File saved successfully.')
-        
+
+        # 处理文件上传并保存数据库记录
+        file_name = file.filename
+        file_type = file.content_type
+        new_upload = UploadHistory(
+            file_url="http://localhost:5000/upload/" + file_name,
+            file_name=file_name,
+            file_type=file_type,
+            environment="Windows 10",
+            upload_time=datetime.utcnow(),
+            threat_level="-",
+            status="analyzing"
+        )
+        db.session.add(new_upload)
+        db.session.commit()
+        app.logger.debug('DB saved successfully.')
+
         result = analyze_file(filepath)
         app.logger.debug('File analyzed successfully.')
 
-        return jsonify({'success': True, 'data': result, "message": "File uploaded successfully", "file_id": new_upload.id} )
+        return jsonify({'success': True, 'data': result, "message": "File uploaded successfully", "file_id": new_upload.file_id} )
     except Exception as e:
         app.logger.debug(str(e))
         return jsonify({'success': False, 'error': str(e)})
