@@ -2,6 +2,7 @@ import React from 'react';
 import { InboxOutlined } from '@ant-design/icons';
 import type { UploadProps } from 'antd';
 import { message, Upload } from 'antd';
+import { history } from '@umijs/max';
 
 const { Dragger } = Upload;
 
@@ -10,15 +11,18 @@ const props: UploadProps = {
   multiple: true,
   action: 'http://localhost:5000/api/v1/upload',
   onChange(info) {
-
-    const { status } = info.file;
+    const { status, response } = info.file;
     if (status !== 'uploading') {
       console.log(info.file, info.fileList);
     }
     if (status === 'done') {
-      message.success(`${info.file.name} file uploaded successfully.`);
+      message.success(`${info.file.name} 文件上传成功`);
+      // 获取上传后的文件ID并跳转到分析结果页面
+      if (response && response.file_id) {
+        history.push(`/analysis/result/${response.file_id}`);
+      }
     } else if (status === 'error') {
-      message.error(`${info.file.name} file upload failed.`);
+      message.error(`${info.file.name} 文件上传失败`);
     }
   },
   // 自定义进度条
@@ -29,7 +33,7 @@ const props: UploadProps = {
     },
     strokeWidth: 3,
     format: (percent) => percent && `${parseFloat(percent.toFixed(2))}%`,
-},
+  },
   onDrop(e) {
     console.log('Dropped files', e.dataTransfer.files);
   },
@@ -73,10 +77,9 @@ const App: React.FC = () => (
     <p className="ant-upload-drag-icon">
       <InboxOutlined />
     </p>
-    <p className="ant-upload-text">Click or drag file to this area to upload</p>
+    <p className="ant-upload-text">点击或拖拽文件到此区域上传</p>
     <p className="ant-upload-hint">
-      Support for a single or bulk upload. Strictly prohibited from uploading company data or other
-      banned files.
+      支持单个或批量上传。严禁上传隐私数据或其他被禁止的文件。
     </p>
   </Dragger>
 );

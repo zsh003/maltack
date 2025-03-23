@@ -89,7 +89,8 @@ export const errorConfig: RequestConfig = {
   requestInterceptors: [
     (config: RequestOptions) => {
       // 拦截请求配置，进行个性化处理。
-      const url = config?.url?.concat('?token = 123');
+      const url = config?.url?.concat('?token=123');
+
       return { ...config, url };
     },
   ],
@@ -98,10 +99,17 @@ export const errorConfig: RequestConfig = {
   responseInterceptors: [
     (response) => {
       // 拦截响应数据，进行个性化处理
+      console.log('后端API响应详情:', {
+        url: response.config.url,
+        status: response.status,
+        data: response.data,
+        headers: response.headers,
+      });
       const { data } = response as unknown as ResponseStructure;
 
+      // 处理业务逻辑
       if (data?.success === false) {
-        message.error('请求失败！');
+        message.error(data.message || '请求失败！');
       }
       return response;
     },

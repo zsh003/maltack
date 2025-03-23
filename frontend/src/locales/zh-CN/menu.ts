@@ -14,6 +14,7 @@ export default {
   'menu.analysis.result': '分析结果',
   'menu.analysis.result.overview': '分析结果概要',
   'menu.analysis.result.basic-info': '文件基本信息',
+  'menu.analysis.result.pe-info': 'PE特征信息',
   'menu.analysis.result.yara-rules': 'Yara规则匹配',
   'menu.analysis.result.sigma-rules': 'Sigma规则匹配',
   'menu.analysis.result.strings': '字符串分析',

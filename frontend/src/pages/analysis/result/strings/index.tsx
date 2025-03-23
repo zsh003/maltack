@@ -1,214 +1,86 @@
-import {
-  DownloadOutlined,
-  EditOutlined,
-  EllipsisOutlined,
-  ShareAltOutlined,
-} from '@ant-design/icons';
 import { useRequest } from '@umijs/max';
-import { Avatar, Card, Col, Dropdown, Form, List, Row, Select, Tooltip } from 'antd';
-import numeral from 'numeral';
+import { Card, Table, Tabs, Spin, Input } from 'antd';
 import type { FC } from 'react';
-import React from 'react';
-import { categoryOptions } from '../../mock';
-import StandardFormRow from './components/StandardFormRow';
-import TagSelect from './components/TagSelect';
-import type { ListItemDataType } from './data.d';
-import { queryFakeList } from './service';
-import useStyles from './style.style';
-export function formatWan(val: number) {
-  const v = val * 1;
-  if (!v || Number.isNaN(v)) return '';
-  let result: React.ReactNode = val;
-  if (val > 10000) {
-    result = (
-      <span>
-        {Math.floor(val / 10000)}
-        <span
-          style={{
-            position: 'relative',
-            top: -2,
-            fontSize: 14,
-            fontStyle: 'normal',
-            marginLeft: 2,
-          }}
-        >
-          万
-        </span>
-      </span>
-    );
+import { useState } from 'react';
+import { queryAnalysisResult } from '../service';
+import { useParams } from 'react-router-dom';
+
+const { Search } = Input;
+const { TabPane } = Tabs;
+
+const StringAnalysis: FC = () => {
+  const { fileId } = useParams<{ fileId: string }>();
+  const { data, loading } = useRequest(() => queryAnalysisResult(Number(fileId)));
+  const [searchText, setSearchText] = useState('');
+
+  if (loading) {
+    return <Spin />;
   }
-  return result;
-}
-const formItemLayout = {
-  wrapperCol: {
-    xs: {
-      span: 24,
-    },
-    sm: {
-      span: 16,
-    },
-  },
-};
-const CardInfo: React.FC<{
-  activeUser: React.ReactNode;
-  newUser: React.ReactNode;
-}> = ({ activeUser, newUser }) => {
-  const { styles } = useStyles();
-  return (
-    <div className={styles.cardInfo}>
-      <div>
-        <p>活跃用户</p>
-        <p>{activeUser}</p>
-      </div>
-      <div>
-        <p>新增用户</p>
-        <p>{newUser}</p>
-      </div>
-    </div>
-  );
-};
-export const Applications: FC<Record<string, any>> = () => {
-  const { styles } = useStyles();
-  const { data, loading, run } = useRequest((values: any) => {
-    console.log('form data', values);
-    return queryFakeList({
-      count: 8,
-    });
-  });
 
-  const list = data?.list || [];
+  const stringInfo = data?.string_info || {};
+  const { ascii_strings = [], unicode_strings = [] } = stringInfo;
+
+  const filterStrings = (strings: any[]) => {
+    if (!searchText) return strings;
+    return strings.filter((item) =>
+      item.string.toLowerCase().includes(searchText.toLowerCase()),
+    );
+  };
+
+  const columns = [
+    {
+      title: '偏移量',
+      dataIndex: 'offset',
+      key: 'offset',
+      width: 120,
+      render: (offset: number) => `0x${offset.toString(16)}`,
+    },
+    {
+      title: '字符串内容',
+      dataIndex: 'string',
+      key: 'string',
+      ellipsis: true,
+    },
+  ];
 
   return (
-    <div className={styles.filterCardList}>
-      <Card bordered={false}>
-        <Form
-          onValuesChange={(_, values) => {
-            run(values);
-          }}
-        >
-          <StandardFormRow
-            title="所属类目"
-            block
-            style={{
-              paddingBottom: 11,
-            }}
-          >
-            <Form.Item name="category">
-              <TagSelect expandable>
-                {categoryOptions.map((category) => (
-                  <TagSelect.Option value={category.value!} key={category.value}>
-                    {category.label}
-                  </TagSelect.Option>
-                ))}
-              </TagSelect>
-            </Form.Item>
-          </StandardFormRow>
-          <StandardFormRow title="其它选项" grid last>
-            <Row gutter={16}>
-              <Col lg={8} md={10} sm={10} xs={24}>
-                <Form.Item {...formItemLayout} name="author" label="作者">
-                  <Select
-                    placeholder="不限"
-                    style={{
-                      maxWidth: 200,
-                      width: '100%',
-                    }}
-                    options={[
-                      {
-                        label: '王昭君',
-                        value: 'lisa',
-                      },
-                    ]}
-                  />
-                </Form.Item>
-              </Col>
-              <Col lg={8} md={10} sm={10} xs={24}>
-                <Form.Item {...formItemLayout} name="rate" label="好评度">
-                  <Select
-                    placeholder="不限"
-                    style={{
-                      maxWidth: 200,
-                      width: '100%',
-                    }}
-                    options={[
-                      {
-                        label: '优秀',
-                        value: 'good',
-                      },
-                      {
-                        label: '普通',
-                        value: 'normal',
-                      },
-                    ]}
-                  />
-                </Form.Item>
-              </Col>
-            </Row>
-          </StandardFormRow>
-        </Form>
-      </Card>
-      <br />
-      <List<ListItemDataType>
-        rowKey="id"
-        grid={{
-          gutter: 16,
-          xs: 1,
-          sm: 2,
-          md: 3,
-          lg: 3,
-          xl: 4,
-          xxl: 4,
-        }}
-        loading={loading}
-        dataSource={list}
-        renderItem={(item) => (
-          <List.Item key={item.id}>
-            <Card
-              hoverable
-              bodyStyle={{
-                paddingBottom: 20,
-              }}
-              actions={[
-                <Tooltip key="download" title="下载">
-                  <DownloadOutlined />
-                </Tooltip>,
-                <Tooltip key="edit" title="编辑">
-                  <EditOutlined />
-                </Tooltip>,
-                <Tooltip title="分享" key="share">
-                  <ShareAltOutlined />
-                </Tooltip>,
-                <Dropdown
-                  key="ellipsis"
-                  menu={{
-                    items: [
-                      {
-                        key: '1',
-                        title: '1st menu item',
-                      },
-                      {
-                        key: '2',
-                        title: '2st menu item',
-                      },
-                    ],
-                  }}
-                >
-                  <EllipsisOutlined />
-                </Dropdown>,
-              ]}
-            >
-              <Card.Meta avatar={<Avatar size="small" src={item.avatar} />} title={item.title} />
-              <div>
-                <CardInfo
-                  activeUser={formatWan(item.activeUser)}
-                  newUser={numeral(item.newUser).format('0,0')}
-                />
-              </div>
-            </Card>
-          </List.Item>
-        )}
+    <Card title="字符串分析">
+      <Search
+        placeholder="搜索字符串"
+        allowClear
+        onChange={(e) => setSearchText(e.target.value)}
+        style={{ marginBottom: 16 }}
       />
-    </div>
+      <Tabs defaultActiveKey="ascii">
+        <TabPane tab="ASCII字符串" key="ascii">
+          <Table
+            columns={columns}
+            dataSource={filterStrings(ascii_strings)}
+            rowKey="offset"
+            pagination={{
+              pageSize: 20,
+              showSizeChanger: true,
+              showQuickJumper: true,
+            }}
+            scroll={{ y: 400 }}
+          />
+        </TabPane>
+        <TabPane tab="Unicode字符串" key="unicode">
+          <Table
+            columns={columns}
+            dataSource={filterStrings(unicode_strings)}
+            rowKey="offset"
+            pagination={{
+              pageSize: 20,
+              showSizeChanger: true,
+              showQuickJumper: true,
+            }}
+            scroll={{ y: 400 }}
+          />
+        </TabPane>
+      </Tabs>
+    </Card>
   );
 };
-export default Applications;
+
+export default StringAnalysis;

@@ -12,7 +12,6 @@ from app.config import Config
 def get_basic_info(filepath):
     try:
         ms = magic.Magic(mime=True)
-        print(1)
         mime_type = ms.from_file(filepath)
         print(mime_type)
     except Exception as e:
@@ -27,10 +26,11 @@ def get_basic_info(filepath):
         'file_size': os.path.getsize(filepath),
         'file_type': magic.from_file(filepath),
         'mime_type': magic.from_file(filepath, mime=True),
+        'analyze_time': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
         'md5': hashlib.md5(content).hexdigest(),
         'sha1': hashlib.sha1(content).hexdigest(),
         'sha256': hashlib.sha256(content).hexdigest(),
-        'analyze_time': datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+
     }
 
 def analyze_pe(filepath):
@@ -93,33 +93,51 @@ def analyze_yara(filepath):
         
         return [{
             'rule_name': match.rule,
+            'tags': match.tags,
             'strings': [{
                 'identifier': string.identifier,
                 'data': string.data.hex(),
                 'offset': string.offset
             } for string in match.strings],
-            'tags': match.tags,
             'meta': match.meta
         } for match in matches]
     except Exception as e:
-        return {'error': str(e)}
+        return {'error': f'YARA分析异常: {str(e)}'}
 
 def analyze_sigma(filepath):
-    """SIGMA规则匹配分析"""
+    """SIGMA规则分析（使用sigma-cli库版）"""
     try:
+        from sigma.cli import main as sigma_main
+        from io import StringIO
+        import sys
+        
         if not os.path.exists(Config.SIGMA_RULES_PATH):
             return {'error': 'SIGMA规则文件不存在'}
-            
-        # 使用sigma-cli工具进行规则匹配
-        cmd = ['sigma-cli', 'scan', '-r', Config.SIGMA_RULES_PATH, filepath]
-        result = subprocess.run(cmd, capture_output=True, text=True)
+
+        # 重定向标准输出
+        original_stdout = sys.stdout
+        sys.stdout = captured_output = StringIO()
         
-        if result.returncode == 0:
-            return json.loads(result.stdout)
-        else:
-            return {'error': result.stderr}
+        # 执行sigma扫描
+        sigma_main([
+            'scan',
+            '-r', Config.SIGMA_RULES_PATH,
+            '-t', 'evtx',  # 根据实际文件类型指定
+            '-f', 'json',
+            filepath
+        ])
+        
+        # 恢复标准输出
+        sys.stdout = original_stdout
+        output = captured_output.getvalue()
+        
+        return json.loads(output) if output else {'error': '无匹配结果'}
+        
+    except json.JSONDecodeError:
+        return {'error': '结果解析失败'}
     except Exception as e:
-        return {'error': str(e)}
+        return {'error': f'SIGMA分析异常: {str(e)}'}
+
 
 def analyze_strings(filepath):
     """字符串分析"""
@@ -162,16 +180,13 @@ def analyze_strings(filepath):
 
 def analyze_file(filepath):
     """综合分析文件"""
+
     basic_info = get_basic_info(filepath)
-    
     pe_info = {}
     if basic_info['file_type'].startswith('PE'):
         pe_info = analyze_pe(filepath)
-    
     yara_matches = analyze_yara(filepath)
-    
     sigma_matches = analyze_sigma(filepath)
-    
     string_info = analyze_strings(filepath)
     
     result = {

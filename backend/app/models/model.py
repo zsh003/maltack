@@ -28,14 +28,17 @@ class UploadHistory(db.Model):
     status = db.Column(db.String(20), nullable=False)
 
     # uselist=False 表示是一对一关系，这使得你可以从 UploadHistory 实例中直接访问关联的 BasicInfo 等的数据，反之亦然。如果想反之不然，删掉back_populates参数即可。
-    # basic_info = relationship("BasicInfo", uselist=False, back_populates="upload_history")
-    # pe_info = relationship("PEInfo", uselist=False, back_populates="upload_history")
-    # yara_match = relationship("YaraMatch", uselist=False, back_populates="upload_history")
-    # sigma_match = relationship("SigmaMatch", uselist=False, back_populates="upload_history")
-    # analyze_strings = relationship("AnalyzeStrings", uselist=False, back_populates="upload_history")
+    basic_info = relationship("BasicInfo", uselist=False, back_populates="upload_history")
+    pe_info = relationship("PEInfo", uselist=False, back_populates="upload_history")
+    yara_match = relationship("YaraMatch", uselist=False, back_populates="upload_history")
+    sigma_match = relationship("SigmaMatch", uselist=False, back_populates="upload_history")
+    analyze_strings = relationship("AnalyzeStrings", uselist=False, back_populates="upload_history")
 
     def __repr__(self):
         return f'<UploadHistory {self.file_id}>'
+    
+    def as_dict(self):
+        return {c.name: getattr(self, c.name) for c in self.__table__.columns}
 
 class BasicInfo(db.Model):
     __tablename__ = 'basic_info'
@@ -49,8 +52,9 @@ class BasicInfo(db.Model):
     md5 = Column(String(32))
     sha1 = Column(String(40))
     sha256 = Column(String(64))
-
-    # upload_history = relationship("UploadHistory", back_populates="basic_info")
+    upload_history = relationship("UploadHistory", back_populates="basic_info")
+    def as_dict(self):
+        return {c.name: getattr(self, c.name) for c in self.__table__.columns}
 
 
 class PEInfo(db.Model):
@@ -63,23 +67,32 @@ class PEInfo(db.Model):
     sections = Column(Text) # JSON string or similar for storing complex structures
     imports = Column(Text)
     exports = Column(Text)
-    # upload_history = relationship("UploadHistory", back_populates="pe_info")
+
+    upload_history = relationship("UploadHistory", back_populates="pe_info")
+    def as_dict(self):
+        return {c.name: getattr(self, c.name) for c in self.__table__.columns}
 
 class YaraMatch(db.Model):
     __tablename__ = 'yara_match'
     file_id = Column(Integer, ForeignKey('upload_history.file_id', ondelete='CASCADE'), primary_key=True)
     rule_name = Column(String(255))
-    strings = Column(Text)
     tags = Column(Text)
+    strings = Column(Text)
     meta = Column(Text)
-    # upload_history = relationship("UploadHistory", back_populates="yara_match")
+
+    upload_history = relationship("UploadHistory", back_populates="yara_match")
+    def as_dict(self):
+        return {c.name: getattr(self, c.name) for c in self.__table__.columns}
 
 
 class SigmaMatch(db.Model):
     __tablename__ = 'sigma_match'
     file_id = Column(Integer, ForeignKey('upload_history.file_id', ondelete='CASCADE'), primary_key=True)
-    rule_details = Column(Text)
-    # upload_history = relationship("UploadHistory", back_populates="sigma_match")
+    matches = Column(Text)
+
+    upload_history = relationship("UploadHistory", back_populates="sigma_match")
+    def as_dict(self):
+        return {c.name: getattr(self, c.name) for c in self.__table__.columns}
 
 
 class AnalyzeStrings(db.Model):
@@ -87,5 +100,9 @@ class AnalyzeStrings(db.Model):
     file_id = Column(Integer, ForeignKey('upload_history.file_id', ondelete='CASCADE'), primary_key=True)
     ascii_strings = Column(Text)
     unicode_strings = Column(Text)
-    # upload_history = relationship("UploadHistory", back_populates="analyze_strings")
+
+    upload_history = relationship("UploadHistory", back_populates="analyze_strings")
+    def as_dict(self):
+        return {c.name: getattr(self, c.name) for c in self.__table__.columns}
+
 

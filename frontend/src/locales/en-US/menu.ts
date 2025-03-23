@@ -14,6 +14,7 @@ export default {
   'menu.analysis.result': 'Results',
   'menu.analysis.result.overview': 'Overview',
   'menu.analysis.result.basic-info': 'Basic Info',
+  'menu.analysis.result.pe-info': 'PE Info',
   'menu.analysis.result.yara-rules': 'Yara-rules Matched',
   'menu.analysis.result.sigma-rules': 'Sigma-rules Matched',
   'menu.analysis.result.strings': 'Strings Analysis',

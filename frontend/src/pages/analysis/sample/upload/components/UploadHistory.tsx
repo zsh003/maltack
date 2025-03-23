@@ -1,10 +1,11 @@
 import React from 'react';
 import { Table, Button } from 'antd';
+import { history } from '@umijs/max';
 
-const UploadHistory = ({ history }: { history: any[] }) => {
+const UploadHistory = ({ history: uploadHistory }: { history: any[] }) => {
   return (
     <Table
-      dataSource={history}
+      dataSource={uploadHistory}
       columns={[
         { title: '文件名称', dataIndex: 'file_name', key: 'file_name' },
         { title: '文件类型', dataIndex: 'file_type', key: 'file_type' },
@@ -15,7 +16,9 @@ const UploadHistory = ({ history }: { history: any[] }) => {
         {
           title: '操作',
           render: (_, record) => (
-            <Button onClick={() => { alert('查看分析结果'); }}>查看分析结果</Button>
+            <Button onClick={() => history.push(`/analysis/result/${record.id}`)}>
+              查看分析结果
+            </Button>
           )
         }
       ]}

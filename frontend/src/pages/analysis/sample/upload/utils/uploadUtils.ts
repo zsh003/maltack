@@ -3,9 +3,9 @@ import { message } from 'antd';
 export const beforeUpload = (file: File, setIsAnalyzing: (value: boolean) => void, setUploadError: (value: string | null) => void, setUploadLoading: (value: boolean) => void): boolean => {
   setIsAnalyzing(true); // 开始分析
   setUploadError(null); // 清空错误
-  const isValidSize = file.size / 1024 / 1024 < 50;
+  const isValidSize = file.size / 1024 / 1024 < 100;
   if (!isValidSize) {
-    message.error('文件大小不能超过50MB');
+    message.error('文件大小不能超过100MB');
     return false;
   }
   setUploadLoading(true); // 设置加载状态

@@ -1,242 +1,159 @@
-import { LikeOutlined, LoadingOutlined, MessageOutlined, StarOutlined } from '@ant-design/icons';
 import { useRequest } from '@umijs/max';
-import { Button, Card, Col, Form, List, Row, Select, Tag } from 'antd';
-import { DefaultOptionType } from 'antd/es/select';
+import { Card, Descriptions, Table, Tag, Spin, Tabs } from 'antd';
 import type { FC } from 'react';
-import React, { useMemo } from 'react';
-import { categoryOptions } from '../../mock';
-import ArticleListContent from './components/ArticleListContent';
-import StandardFormRow from './components/StandardFormRow';
-import TagSelect from './components/TagSelect';
-import type { ListItemDataType } from './data.d';
-import { queryFakeList } from './service';
-import useStyles from './style.style';
+import { queryAnalysisResult } from '../service';
+import { useParams } from 'react-router-dom';
 
-const FormItem = Form.Item;
+const { TabPane } = Tabs;
 
-const pageSize = 5;
+const Overview: FC = () => {
+  const { fileId } = useParams<{ fileId: string }>();
+  const { data, loading } = useRequest(() => queryAnalysisResult(Number(fileId)));
 
-const Articles: FC = () => {
-  const [form] = Form.useForm();
+  if (loading) {
+    return <Spin />;
+  }
 
-  const { styles } = useStyles();
+  const { basic_info, pe_info, yara_matches, sigma_matches, string_info } = data || {};
 
-  const { data, reload, loading, loadMore, loadingMore } = useRequest(
-    () => {
-      return queryFakeList({
-        count: pageSize,
-      });
+  const yaraColumns = [
+    {
+      title: '规则名称',
+      dataIndex: 'rule_name',
+      key: 'rule_name',
     },
     {
-      loadMore: true,
-    },
-  );
-
-  const list = data?.list || [];
-
-  const setOwner = () => {
-    form.setFieldsValue({
-      owner: ['wzj'],
-    });
-  };
-
-  const owners = [
-    {
-      id: 'wzj',
-      name: '我自己',
-    },
-    {
-      id: 'wjh',
-      name: '吴家豪',
-    },
-    {
-      id: 'zxx',
-      name: '周星星',
-    },
-    {
-      id: 'zly',
-      name: '赵丽颖',
-    },
-    {
-      id: 'ym',
-      name: '姚明',
+      title: '标签',
+      dataIndex: 'tags',
+      key: 'tags',
+      render: (tags: string[]) => (
+        <>
+          {tags.map((tag) => (
+            <Tag key={tag} color="blue">
+              {tag}
+            </Tag>
+          ))}
+        </>
+      ),
     },
   ];
 
-  const IconText: React.FC<{
-    type: string;
-    text: React.ReactNode;
-  }> = ({ type, text }) => {
-    switch (type) {
-      case 'star-o':
-        return (
-          <span>
-            <StarOutlined style={{ marginRight: 8 }} />
-            {text}
-          </span>
-        );
-      case 'like-o':
-        return (
-          <span>
-            <LikeOutlined style={{ marginRight: 8 }} />
-            {text}
-          </span>
-        );
-      case 'message':
-        return (
-          <span>
-            <MessageOutlined style={{ marginRight: 8 }} />
-            {text}
-          </span>
-        );
-      default:
-        return null;
-    }
-  };
-
-  const formItemLayout = {
-    wrapperCol: {
-      xs: { span: 24 },
-      sm: { span: 24 },
-      md: { span: 12 },
+  const sigmaColumns = [
+    {
+      title: '规则ID',
+      dataIndex: 'id',
+      key: 'id',
     },
-  };
+    {
+      title: '规则名称',
+      dataIndex: 'title',
+      key: 'title',
+    },
+    {
+      title: '状态',
+      dataIndex: 'status',
+      key: 'status',
+      render: (status: string) => (
+        <Tag color={status === 'true' ? 'red' : 'green'}>
+          {status === 'true' ? '匹配' : '不匹配'}
+        </Tag>
+      ),
+    },
+  ];
 
-  const loadMoreDom = list.length > 0 && (
-    <div style={{ textAlign: 'center', marginTop: 16 }}>
-      <Button onClick={loadMore} style={{ paddingLeft: 48, paddingRight: 48 }}>
-        {loadingMore ? (
-          <span>
-            <LoadingOutlined /> 加载中...
-          </span>
-        ) : (
-          '加载更多'
-        )}
-      </Button>
-    </div>
-  );
-
-  const ownerOptions = useMemo<DefaultOptionType[]>(
-    () =>
-      owners.map((item) => ({
-        label: item.name,
-        value: item.id,
-      })),
-    [owners],
-  );
+  const stringColumns = [
+    {
+      title: '偏移量',
+      dataIndex: 'offset',
+      key: 'offset',
+      width: 120,
+      render: (offset: number) => `0x${offset.toString(16)}`,
+    },
+    {
+      title: '字符串内容',
+      dataIndex: 'string',
+      key: 'string',
+      ellipsis: true,
+    },
+  ];
 
   return (
-    <>
-      <Card bordered={false}>
-        <Form
-          layout="inline"
-          form={form}
-          initialValues={{
-            owner: ['wjh', 'zxx'],
-          }}
-          onValuesChange={reload}
-        >
-          <StandardFormRow title="所属类目" block style={{ paddingBottom: 11 }}>
-            <FormItem name="category">
-              <TagSelect expandable>
-                {categoryOptions.map((category) => (
-                  <TagSelect.Option value={category.value!} key={category.value}>
-                    {category.label}
-                  </TagSelect.Option>
-                ))}
-              </TagSelect>
-            </FormItem>
-          </StandardFormRow>
-          <StandardFormRow title="owner" grid>
-            <FormItem name="owner" noStyle>
-              <Select
-                mode="multiple"
-                placeholder="选择 owner"
-                style={{ minWidth: '6rem' }}
-                options={ownerOptions}
-              />
-            </FormItem>
-            <a className={styles.selfTrigger} onClick={setOwner}>
-              只看自己的
-            </a>
-          </StandardFormRow>
-          <StandardFormRow title="其它选项" grid last>
-            <Row gutter={16}>
-              <Col xl={8} lg={10} md={12} sm={24} xs={24}>
-                <FormItem {...formItemLayout} label="活跃用户" name="user">
-                  <Select
-                    placeholder="不限"
-                    style={{ maxWidth: 200, width: '100%' }}
-                    options={[
-                      {
-                        label: '李三',
-                        value: 'lisa',
-                      },
-                    ]}
-                  />
-                </FormItem>
-              </Col>
-              <Col xl={8} lg={10} md={12} sm={24} xs={24}>
-                <FormItem {...formItemLayout} label="好评度" name="rate">
-                  <Select
-                    placeholder="不限"
-                    style={{ maxWidth: 200, width: '100%' }}
-                    options={[
-                      {
-                        label: '优秀',
-                        value: 'good',
-                      },
-                    ]}
-                  />
-                </FormItem>
-              </Col>
-            </Row>
-          </StandardFormRow>
-        </Form>
+    <div>
+      <Card title="基本信息" style={{ marginBottom: 16 }}>
+        <Descriptions column={2}>
+          <Descriptions.Item label="文件名">{basic_info?.file_name}</Descriptions.Item>
+          <Descriptions.Item label="文件大小">{basic_info?.file_size} 字节</Descriptions.Item>
+          <Descriptions.Item label="文件类型">{basic_info?.file_type}</Descriptions.Item>
+          <Descriptions.Item label="MIME类型">{basic_info?.mime_type}</Descriptions.Item>
+          <Descriptions.Item label="MD5">{basic_info?.md5}</Descriptions.Item>
+          <Descriptions.Item label="SHA1">{basic_info?.sha1}</Descriptions.Item>
+          <Descriptions.Item label="SHA256">{basic_info?.sha256}</Descriptions.Item>
+          <Descriptions.Item label="分析时间">{basic_info?.analyze_time}</Descriptions.Item>
+        </Descriptions>
       </Card>
-      <Card
-        style={{ marginTop: 24 }}
-        bordered={false}
-        bodyStyle={{ padding: '8px 32px 32px 32px' }}
-      >
-        <List<ListItemDataType>
-          size="large"
-          loading={loading}
-          rowKey="id"
-          itemLayout="vertical"
-          loadMore={loadMoreDom}
-          dataSource={list}
-          renderItem={(item) => (
-            <List.Item
-              key={item.id}
-              actions={[
-                <IconText key="star" type="star-o" text={item.star} />,
-                <IconText key="like" type="like-o" text={item.like} />,
-                <IconText key="message" type="message" text={item.message} />,
-              ]}
-              extra={<div className={styles.listItemExtra} />}
-            >
-              <List.Item.Meta
-                title={
-                  <a className={styles.listItemMetaTitle} href={item.href}>
-                    {item.title}
-                  </a>
-                }
-                description={
-                  <span>
-                    <Tag>Ant Design</Tag>
-                    <Tag>设计语言</Tag>
-                    <Tag>蚂蚁金服</Tag>
-                  </span>
-                }
-              />
-              <ArticleListContent data={item} />
-            </List.Item>
-          )}
-        />
+
+      {pe_info && (
+        <Card title="PE文件信息" style={{ marginBottom: 16 }}>
+          <Descriptions column={2} bordered>
+            <Descriptions.Item label="机器类型">{pe_info.machine_type}</Descriptions.Item>
+            <Descriptions.Item label="时间戳">{pe_info.timestamp}</Descriptions.Item>
+            <Descriptions.Item label="子系统">{pe_info.subsystem}</Descriptions.Item>
+            <Descriptions.Item label="DLL特征">{pe_info.dll_characteristics}</Descriptions.Item>
+          </Descriptions>
+        </Card>
+      )}
+
+      <Card title="规则匹配结果">
+        <Tabs defaultActiveKey="yara">
+          <TabPane tab="Yara规则匹配" key="yara">
+            <Table
+              columns={yaraColumns}
+              dataSource={yara_matches || []}
+              rowKey="rule_name"
+              pagination={false}
+            />
+          </TabPane>
+          <TabPane tab="Sigma规则匹配" key="sigma">
+            <Table
+              columns={sigmaColumns}
+              dataSource={sigma_matches || []}
+              rowKey="id"
+              pagination={false}
+            />
+          </TabPane>
+        </Tabs>
       </Card>
-    </>
+
+      <Card title="字符串分析" style={{ marginTop: 16 }}>
+        <Tabs defaultActiveKey="ascii">
+          <TabPane tab="ASCII字符串" key="ascii">
+            <Table
+              columns={stringColumns}
+              dataSource={string_info?.ascii_strings || []}
+              rowKey="offset"
+              pagination={{
+                pageSize: 10,
+                showSizeChanger: true,
+                showQuickJumper: true,
+              }}
+            />
+          </TabPane>
+          <TabPane tab="Unicode字符串" key="unicode">
+            <Table
+              columns={stringColumns}
+              dataSource={string_info?.unicode_strings || []}
+              rowKey="offset"
+              pagination={{
+                pageSize: 10,
+                showSizeChanger: true,
+                showQuickJumper: true,
+              }}
+            />
+          </TabPane>
+        </Tabs>
+      </Card>
+    </div>
   );
 };
 
-export default Articles;
+export default Overview;

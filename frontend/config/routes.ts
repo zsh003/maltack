@@ -109,31 +109,41 @@ export default [
             redirect: '/analysis/result/overview',
           },
           {
-            path: '/analysis/result/overview',
+            path: '/analysis/result/:fileId',
+            component: './analysis/result/overview',
+          },
+          {
+            path: '/analysis/result/overview/:fileId',
             icon: 'smile',
             name: 'overview',
             component: './analysis/result/overview',
           },
           {
-            path: '/analysis/result/basic-info',
+            path: '/analysis/result/basic-info/:fileId',
             name: 'basic-info',
             icon: 'smile',
             component: './analysis/result/basic-info',
           },
           {
-            path: '/analysis/result/yara-rules',
+            path: '/analysis/result/pe-info/:fileId',
+            name: 'pe-info',
+            icon: 'smile',
+            component: './analysis/result/pe-info',
+          },
+          {
+            path: '/analysis/result/yara-rules/:fileId',
             name: 'yara-rules',
             icon: 'smile',
             component: './analysis/result/yara-rules'
           },
           {
-            path: '/analysis/result/sigma-rules',
+            path: '/analysis/result/sigma-rules/:fileId',
             name: 'sigma-rules',
             icon: 'smile',
             component: './analysis/result/sigma-rules'
           },
           {
-            path: '/analysis/result/strings',
+            path: '/analysis/result/strings/:fileId',
             name: 'strings',
             icon: 'smile',
             component: './analysis/result/strings'
