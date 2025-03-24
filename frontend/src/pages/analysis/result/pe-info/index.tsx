@@ -1,14 +1,12 @@
 import { useRequest } from '@umijs/max';
 import { Card, Table, Descriptions, Spin, Tabs } from 'antd';
 import type { FC } from 'react';
-import { queryAnalysisResult } from '../service';
-import { useParams } from 'react-router-dom';
+import { getPEInfo } from '../service';
 
 const { TabPane } = Tabs;
 
 const PEInfo: FC = () => {
-  const { fileId } = useParams<{ fileId: string }>();
-  const { data, loading } = useRequest(() => queryAnalysisResult(Number(fileId)));
+  const { data, loading } = useRequest(() => getPEInfo());
 
   if (loading) {
     return <Spin />;
@@ -105,4 +103,4 @@ const PEInfo: FC = () => {
   );
 };
 
-export default PEInfo; 
+export default PEInfo;

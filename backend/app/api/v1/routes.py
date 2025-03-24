@@ -205,14 +205,14 @@ def save_analysis_results(file_id, result):
             ascii_strings=None,
             unicode_strings=None
         )
-        db.session.add(analyze_strings)
-        app.logger.debug('Analysis result saved in analyze_strings successfully.')
+    db.session.add(analyze_strings)
+    app.logger.debug('Analysis result saved in analyze_strings successfully.')
 
     db.session.commit()
 
     app.logger.debug('分析结果保存成功')
 
-@api_v1.route('/analysis/result/<int:file_id>', methods=['GET'])
+@api_v1.route('/analysis/result/overview/<int:file_id>', methods=['GET'])
 def get_analysis_result(file_id):
     upload = UploadHistory.query.get(file_id)
     if not upload:
@@ -223,5 +223,55 @@ def get_analysis_result(file_id):
         'pe_info': upload.pe_info.as_dict() if upload.pe_info else None,
         'yara_matches': upload.yara_match.as_dict() if upload.yara_match else None,
         'sigma_matches': upload.sigma_match.as_dict() if upload.sigma_match else None,
+        'string_info': upload.analyze_strings.as_dict() if upload.analyze_strings else None
+    })
+
+@api_v1.route('/analysis/result/basic-info/<int:file_id>', methods=['GET'])
+def get_basic_info(file_id):
+    upload = UploadHistory.query.get(file_id)
+    if not upload:
+        return jsonify({'error': 'File not found'}), 404
+    
+    return jsonify({
+        'basic_info': upload.basic_info.as_dict() if upload.basic_info else None
+    })
+
+@api_v1.route('/analysis/result/pe-info/<int:file_id>', methods=['GET'])
+def get_pe_info(file_id):
+    upload = UploadHistory.query.get(file_id)
+    if not upload:
+        return jsonify({'error': 'File not found'}), 404
+    
+    return jsonify({
+        'pe_info': upload.pe_info.as_dict() if upload.pe_info else None
+    })
+
+@api_v1.route('/analysis/result/yara-rules/<int:file_id>', methods=['GET'])
+def get_yara_rules(file_id):
+    upload = UploadHistory.query.get(file_id)
+    if not upload:
+        return jsonify({'error': 'File not found'}), 404
+    
+    return jsonify({
+        'yara_matches': upload.yara_match.as_dict() if upload.yara_match else None
+    })
+
+@api_v1.route('/analysis/result/sigma-rules/<int:file_id>', methods=['GET'])
+def get_sigma_rules(file_id):
+    upload = UploadHistory.query.get(file_id)
+    if not upload:
+        return jsonify({'error': 'File not found'}), 404
+    
+    return jsonify({
+        'sigma_matches': upload.sigma_match.as_dict() if upload.sigma_match else None
+    })
+
+@api_v1.route('/analysis/result/strings/<int:file_id>', methods=['GET'])
+def get_strings(file_id):
+    upload = UploadHistory.query.get(file_id)
+    if not upload:
+        return jsonify({'error': 'File not found'}), 404
+    
+    return jsonify({
         'string_info': upload.analyze_strings.as_dict() if upload.analyze_strings else None
     })

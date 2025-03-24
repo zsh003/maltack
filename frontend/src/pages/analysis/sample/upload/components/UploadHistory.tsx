@@ -1,8 +1,17 @@
 import React from 'react';
 import { Table, Button } from 'antd';
 import { history } from '@umijs/max';
+import useAnalysisModel from '@/models/analysis';
 
 const UploadHistory = ({ history: uploadHistory }: { history: any[] }) => {
+  const { updateCurrentFileId } = useAnalysisModel();
+
+  const handleViewResult = (fileId: number) => {
+    fileId = 31; // 测试用
+    updateCurrentFileId(fileId);
+    history.push(`/analysis/result/overview/${fileId}`);
+  };
+
   return (
     <Table
       dataSource={uploadHistory}
@@ -16,7 +25,7 @@ const UploadHistory = ({ history: uploadHistory }: { history: any[] }) => {
         {
           title: '操作',
           render: (_, record) => (
-            <Button onClick={() => history.push(`/analysis/result/${record.id}`)}>
+            <Button onClick={() => handleViewResult(record.id)}>
               查看分析结果
             </Button>
           )

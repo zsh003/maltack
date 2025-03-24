@@ -106,47 +106,67 @@ export default [
         routes: [
           {
             path: '/analysis/result',
-            redirect: '/analysis/result/overview',
-          },
-          {
-            path: '/analysis/result/:fileId',
-            component: './analysis/result/overview',
+            redirect: '/analysis/result/overview/31',
           },
           {
             path: '/analysis/result/overview/:fileId',
-            icon: 'smile',
-            name: 'overview',
             component: './analysis/result/overview',
           },
           {
             path: '/analysis/result/basic-info/:fileId',
-            name: 'basic-info',
-            icon: 'smile',
             component: './analysis/result/basic-info',
           },
           {
             path: '/analysis/result/pe-info/:fileId',
-            name: 'pe-info',
-            icon: 'smile',
             component: './analysis/result/pe-info',
           },
           {
             path: '/analysis/result/yara-rules/:fileId',
-            name: 'yara-rules',
-            icon: 'smile',
-            component: './analysis/result/yara-rules'
+            component: './analysis/result/yara-rules',
           },
           {
             path: '/analysis/result/sigma-rules/:fileId',
-            name: 'sigma-rules',
-            icon: 'smile',
-            component: './analysis/result/sigma-rules'
+            component: './analysis/result/sigma-rules',
           },
           {
             path: '/analysis/result/strings/:fileId',
+            component: './analysis/result/strings',
+          },
+          {
+            path: '/analysis/result/overview',
+            component: './analysis/result/overview',
+            icon: 'smile',
+            name: 'overview'
+          },
+          {
+            path: '/analysis/result/basic-info',
+            component: './analysis/result/basic-info',
+            name: 'basic-info',
+            icon: 'smile',
+          },
+          {
+            path: '/analysis/result/pe-info',
+            component: './analysis/result/pe-info',
+            name: 'pe-info',
+            icon: 'smile',
+          },
+          {
+            path: '/analysis/result/yara-rules',
+            component: './analysis/result/yara-rules',
+            name: 'yara-rules',
+            icon: 'smile',
+          },
+          {
+            path: '/analysis/result/sigma-rules',
+            component: './analysis/result/sigma-rules',
+            name: 'sigma-rules',
+            icon: 'smile',
+          },
+          {
+            path: '/analysis/result/strings',
+            component: './analysis/result/strings',
             name: 'strings',
             icon: 'smile',
-            component: './analysis/result/strings'
           }
         ]
       }

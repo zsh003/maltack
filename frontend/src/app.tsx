@@ -69,6 +69,38 @@ export const layout: RunTimeLayoutConfig = ({ initialState, setInitialState }) =
         history.push(loginPath);
       }
     },
+    // 添加Url的参数处理
+    patchRoutes: ({ routes }: { routes: any[] }) => {
+      routes.forEach((route: any) => {
+        if (route.path === '/analysis/result') {
+          route.routes?.forEach((subRoute: any) => {
+            if (subRoute.path?.includes(':fileId')) {
+              // 添加菜单参数配置
+              subRoute.menu = {
+                ...subRoute.menu,
+                params: {
+                  fileId: ':fileId' // 声明需要注入的参数
+                }
+              };
+            }
+          })
+        }
+      })
+    },
+    onRouteChange: ({ location }: { location: any }) => {
+      // 路由守卫：检查分析结果页面的参数
+      if (location.pathname.startsWith('/analysis/result')) {
+        const { currentFileId } = require('@/models/analysis').default(); // 获取模型实例
+        // const params = new URLSearchParams(location.search);
+
+        // 当路径包含子路由但缺少fileId时
+        if ( !location.pathname.match(/\/\d+($|\/)/)) {
+          history.replace(
+            `${location.pathname}/${currentFileId}${location.search}`
+          );
+        }
+      }
+    },
     bgLayoutImgList: [
       {
         src: 'https://mdn.alipayobjects.com/yuyan_qk0oxh/afts/img/D2LWSqNny4sAAAAAAAAAAAAAFl94AQBr',

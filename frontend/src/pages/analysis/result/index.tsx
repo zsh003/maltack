@@ -1,7 +1,9 @@
 import { PageContainer } from '@ant-design/pro-components';
-import { history, Outlet, useLocation, useMatch } from '@umijs/max';
+import { history, Outlet, useLocation, useMatch, useParams } from '@umijs/max';
 import { Input } from 'antd';
 import type { FC } from 'react';
+import { useEffect } from 'react';
+import useAnalysisModel from '@/models/analysis';
 
 type SearchProps = {
   children?: React.ReactNode;
@@ -15,6 +17,10 @@ const tabList = [
   {
     key: 'basic-info',
     tab: '文件基本信息',
+  },
+  {
+    key: 'pe-info',
+    tab: 'PE文件信息',
   },
   {
     key: 'yara-rules',
@@ -32,29 +38,19 @@ const tabList = [
 
 const Search: FC<SearchProps> = () => {
   const location = useLocation();
-  let match = useMatch(location.pathname);
-  const handleTabChange = (key: string) => {
-    const url =
-      match?.pathname === '/' ? '' : match?.pathname.substring(0, match.pathname.lastIndexOf('/'));
-    switch (key) {
-      case 'overview':
-        history.push(`${url}/overview`);
-        break;
-      case 'basic-info':
-        history.push(`${url}/basic-info`);
-        break;
-      case 'yara-rules':
-        history.push(`${url}/yara-rules`);
-        break;
-      case 'sigma-rules':
-        history.push(`${url}/sigma-rules`);
-        break;
-      case 'strings':
-        history.push(`${url}/strings`);
-        break;
-      default:
-        break;
+  const { fileId } = useParams<{ fileId: string }>();
+  const { currentFileId, updateCurrentFileId } = useAnalysisModel();
+  const match = useMatch(location.pathname);
+
+  useEffect(() => {
+    if (fileId) {
+      updateCurrentFileId(parseInt(fileId, 10));
     }
+  }, [fileId, updateCurrentFileId]);
+
+  const handleTabChange = (key: string) => {
+    const targetPath = `/analysis/result/${key}/${currentFileId}`;
+    history.push(targetPath);
   };
 
   const handleFormSubmit = (value: string) => {
@@ -63,11 +59,14 @@ const Search: FC<SearchProps> = () => {
   };
 
   const getTabKey = () => {
-    const tabKey = location.pathname.substring(location.pathname.lastIndexOf('/') + 1);
-    if (tabKey && tabKey !== '/') {
-      return tabKey;
-    }
-    return 'overview';
+    const pathParts = location.pathname.split('/');
+    const resultIndex = pathParts.indexOf('result');
+    const tabKey = resultIndex !== -1 ? pathParts[resultIndex + 1] : 'overview';
+
+    // 校验是否为有效标签项
+    return tabList.some(item => item.key === tabKey)
+      ? tabKey
+      : 'overview';
   };
 
   return (

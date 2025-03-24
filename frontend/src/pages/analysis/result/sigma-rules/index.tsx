@@ -1,12 +1,10 @@
 import { useRequest } from '@umijs/max';
 import { Card, Table, Tag, Spin } from 'antd';
 import type { FC } from 'react';
-import { queryAnalysisResult } from '../service';
-import { useParams } from 'react-router-dom';
+import { getSigmaRules } from '../service';
 
 const SigmaMatches: FC = () => {
-  const { fileId } = useParams<{ fileId: string }>();
-  const { data, loading } = useRequest(() => queryAnalysisResult(Number(fileId)));
+  const { data, loading } = useRequest(() => getSigmaRules());
 
   if (loading) {
     return <Spin />;
@@ -68,4 +66,4 @@ const SigmaMatches: FC = () => {
   );
 };
 
-export default SigmaMatches; 
+export default SigmaMatches;

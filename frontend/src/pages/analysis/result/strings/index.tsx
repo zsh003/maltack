@@ -2,15 +2,13 @@ import { useRequest } from '@umijs/max';
 import { Card, Table, Tabs, Spin, Input } from 'antd';
 import type { FC } from 'react';
 import { useState } from 'react';
-import { queryAnalysisResult } from '../service';
-import { useParams } from 'react-router-dom';
+import { getStrings } from '../service';
 
 const { Search } = Input;
 const { TabPane } = Tabs;
 
 const StringAnalysis: FC = () => {
-  const { fileId } = useParams<{ fileId: string }>();
-  const { data, loading } = useRequest(() => queryAnalysisResult(Number(fileId)));
+  const { data, loading } = useRequest(() => getStrings());
   const [searchText, setSearchText] = useState('');
 
   if (loading) {

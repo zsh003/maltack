@@ -98,8 +98,8 @@ class SigmaMatch(db.Model):
 class AnalyzeStrings(db.Model):
     __tablename__ = 'analyze_strings'
     file_id = Column(Integer, ForeignKey('upload_history.file_id', ondelete='CASCADE'), primary_key=True)
-    ascii_strings = Column(Text)
-    unicode_strings = Column(Text)
+    ascii_strings = Column(Text().with_variant(Text(length=4294967295), 'mysql'))  # 修改为长文本类型
+    unicode_strings = Column(Text().with_variant(Text(length=4294967295), 'mysql'))
 
     upload_history = relationship("UploadHistory", back_populates="analyze_strings")
     def as_dict(self):

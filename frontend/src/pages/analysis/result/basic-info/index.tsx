@@ -1,12 +1,10 @@
 import { useRequest } from '@umijs/max';
 import { Card, Descriptions, Spin } from 'antd';
 import type { FC } from 'react';
-import { queryAnalysisResult } from '../service';
-import { useParams } from 'react-router-dom';
+import { getBasicInfo } from '../service';
 
 const BasicInfo: FC = () => {
-  const { fileId } = useParams<{ fileId: string }>();
-  const { data, loading } = useRequest(() => queryAnalysisResult(Number(fileId)));
+  const { data, loading } = useRequest(() => getBasicInfo());
 
   if (loading) {
     return <Spin />;

@@ -1,14 +1,13 @@
 import { useRequest } from '@umijs/max';
 import { Card, Descriptions, Table, Tag, Spin, Tabs } from 'antd';
 import type { FC } from 'react';
-import { queryAnalysisResult } from '../service';
-import { useParams } from 'react-router-dom';
+import { getAnalysisResult } from '../service';
 
 const { TabPane } = Tabs;
 
 const Overview: FC = () => {
-  const { fileId } = useParams<{ fileId: string }>();
-  const { data, loading } = useRequest(() => queryAnalysisResult(Number(fileId)));
+
+  const { data, loading } = useRequest(() => getAnalysisResult());
 
   if (loading) {
     return <Spin />;

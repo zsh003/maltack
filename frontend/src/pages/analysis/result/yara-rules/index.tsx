@@ -1,12 +1,10 @@
 import { useRequest } from '@umijs/max';
 import { Card, Table, Tag, Spin } from 'antd';
 import type { FC } from 'react';
-import { queryAnalysisResult } from '../service';
-import { useParams } from 'react-router-dom';
+import { getYaraRules } from '../service';
 
 const YaraMatches: FC = () => {
-  const { fileId } = useParams<{ fileId: string }>();
-  const { data, loading } = useRequest(() => queryAnalysisResult(Number(fileId)));
+  const { data, loading } = useRequest(() => getYaraRules());
 
   if (loading) {
     return <Spin />;
