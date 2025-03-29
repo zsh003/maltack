@@ -19,6 +19,30 @@ warnings.filterwarnings("ignore")
 
 class Feature_engineering(object):
     
+    feature_keys = [
+        # Section features (16)
+        'entry', 'size_R', 'size_W', 'size_X', 'entr_R', 'entr_W', 'entr_X',
+        'rsrc_num', 'section_num', 'file_size',
+        'size_R_weight', 'size_W_weight', 'size_X_weight',
+        'entr_R_weight', 'entr_W_weight', 'entr_X_weight',
+        
+        # String match features (26)
+        'btc_count', 'btc_mean', 'ltc_count', 'ltc_mean', 'xmr_count', 'xmr_mean',
+        'paths_count', 'paths_mean', 'regs_count', 'regs_mean', 'urls_count', 'urls_mean',
+        'ips_count', 'ips_mean', 'mz_count', 'mz_mean', 'pe_count', 'pe_mean',
+        'pool_count', 'pool_mean', 'cpu_count', 'cpu_mean', 'gpu_count', 'gpu_mean',
+        'coin_count', 'coin_mean',
+        
+        # YARA features (2)
+        'packer_count', 'yargen_count',
+        
+        # String count features (5)
+        'av_count', 'dbg_count', 'pool_name_count', 'algorithm_name_count', 'coin_name_count',
+        
+        # Opcode features (7)
+        'opcode_min', 'opcode_max', 'opcode_sum', 'opcode_mean',
+        'opcode_var', 'opcode_count', 'opcode_uniq'
+    ]
     def __init__(self):
         self.path_pattern = re.compile(b'[C-Zc-z]:(?:(?:\\\\|/)[^\\\\/:*?"<>|"\x00-\x19\x7f-\xff]+)+(?:\\\\|/)?')
         self.regs_pattern = re.compile(b'reg', re.IGNORECASE)# re.compile(b'[A-Z_ ]{5,}(?:\\\\[a-zA-Z ]+)+')
@@ -66,7 +90,6 @@ class Feature_engineering(object):
 
         self.m32_pat = re.compile(b'\x55\x8b\xec[^\xc3]*\xc3')
         self.m64_pat = re.compile(b'\x48[\x83\x81]\xec[^\xc3]*[\xc3\xc2]')
-
 
             
 
@@ -192,7 +215,7 @@ class Feature_engineering(object):
 
 
     def get_feature_engineering(self, sample_data):
-        # 0.6
+
         tmp_section = self.get_section_infomation(sample_data)
         section_keys = ["size_R", "size_W", "size_X", "entr_R", "entr_W", "entr_X"]
         for k in section_keys:
@@ -200,20 +223,11 @@ class Feature_engineering(object):
             tmp = tmp_section[k]
             tmp_section["{}_weight".format(k)] = tmp / file_size
 
-        # 2.9
         tmp_match = self.string_match(sample_data)
-
-        # 0.24
         tmp_yara = self.yara_match(sample_data)
-
-        # 3
         tmp_count = self.string_count(sample_data)
-
-        # 12
         tmp_opcode = self.opcodes(sample_data)
-
         res_dict = ChainMap(tmp_section, tmp_match, tmp_yara, tmp_count, tmp_opcode)
-
-        res = [res_dict[key] for key in self.keys]
+        res = [res_dict[key] for key in self.feature_keys]
 
         return res
