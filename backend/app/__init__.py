@@ -29,9 +29,11 @@ def create_app():
     # 注册蓝图
     from app.api.v1 import api_v1 as api_v1_bp
     from app.api.v2 import api_v2 as api_v2_bp
+    from app.api.v1 import features as features_bp
     # Blueprint 实现不同版本 API 模块化
     app.register_blueprint(api_v1_bp, url_prefix='/api/v1')
     app.register_blueprint(api_v2_bp, url_prefix='/api/v2')
+    app.register_blueprint(features_bp, url_prefix='/api/v1/analysis/features')
     
 
     return app

@@ -5,7 +5,7 @@ export default function useAnalysisModel() {
   const [currentFileId, setCurrentFileId] = useState<number>(() => {
     // 从本地存储初始化
     const saved = localStorage.getItem('currentFileId');
-    return saved ? parseInt(saved) : 1;
+    return saved ? parseInt(saved) : 31;
   });
 
   useEffect(() => {

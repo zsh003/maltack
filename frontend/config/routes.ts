@@ -106,7 +106,7 @@ export default [
         routes: [
           {
             path: '/analysis/result',
-            redirect: '/analysis/result/overview/31',
+            redirect: '/analysis/result/overview/37',
           },
           {
             path: '/analysis/result/overview/:fileId',
@@ -166,6 +166,47 @@ export default [
             path: '/analysis/result/strings',
             component: './analysis/result/strings',
             name: 'strings',
+            icon: 'smile',
+          }
+        ]
+      },
+      {
+        path: '/analysis/machine-learning',
+        name: 'machine-learning',
+        component: './analysis/machine-learning',
+        routes: [
+          {
+            path: '/analysis/machine-learning',
+            redirect: '/analysis/result/machine-learning/37',
+          },
+          {
+            path: '/analysis/machine-learning/histogram/:fileId',
+            component: './analysis/machine-learning/histogram',
+          },
+          {
+            path: '/analysis/machine-learning/pe-static-feature/:fileId',
+            component: './analysis/machine-learning/pe-static-feature',
+          },
+          {
+            path: '/analysis/machine-learning/feature-engineering/:fileId',
+            component: './analysis/machine-learning/feature-engineering',
+          },
+          {
+            path: '/analysis/machine-learning/histogram',
+            component: './analysis/machine-learning/histogram',
+            icon: 'smile',
+            name: 'histogram'
+          },
+          {
+            path: '/analysis/machine-learning/pe-static-feature',
+            component: './analysis/machine-learning/pe-static-feature',
+            name: 'pe-static-feature',
+            icon: 'smile',
+          },
+          {
+            path: '/analysis/machine-learning/feature-engineering',
+            component: './analysis/machine-learning/feature-engineering',
+            name: 'feature-engineering',
             icon: 'smile',
           }
         ]

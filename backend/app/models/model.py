@@ -106,3 +106,49 @@ class AnalyzeStrings(db.Model):
         return {c.name: getattr(self, c.name) for c in self.__table__.columns}
 
 
+
+
+
+
+class ByteHistogram(db.Model):
+    __tablename__ = 'byte_histogram'
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    file_id = db.Column(db.String(64), db.ForeignKey('upload_history.file_id'), nullable=False)
+    byte_value = db.Column(db.Integer, nullable=False)
+    count = db.Column(db.Integer, nullable=False)
+
+    def __repr__(self):
+        return f'<ByteHistogram {self.file_id}>'
+
+class ByteEntropy(db.Model):
+    __tablename__ = 'byte_entropy'
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    file_id = db.Column(db.String(64), db.ForeignKey('upload_history.file_id'), nullable=False)
+    byte_value = db.Column(db.Integer, nullable=False)
+    entropy_value = db.Column(db.Float, nullable=False)
+
+    def __repr__(self):
+        return f'<ByteEntropy {self.file_id}>'
+
+class PEStaticFeature(db.Model):
+    __tablename__ = 'pe_static_features'
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    file_id = db.Column(db.String(64), db.ForeignKey('upload_history.file_id'), nullable=False)
+    feature_type = db.Column(db.String(50), nullable=False)
+    feature_data = db.Column(db.JSON, nullable=False)
+
+    def __repr__(self):
+        return f'<PEStaticFeature {self.file_id} {self.feature_type}>'
+
+class FeatureEngineering(db.Model):
+    __tablename__ = 'feature_engineering'
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    file_id = db.Column(db.String(64), db.ForeignKey('upload_history.file_id'), nullable=False)
+    section_info = db.Column(db.JSON)
+    string_matches = db.Column(db.JSON)
+    yara_matches = db.Column(db.JSON)
+    opcode_features = db.Column(db.JSON)
+    boolean_features = db.Column(db.JSON)
+
+    def __repr__(self):
+        return f'<FeatureEngineering {self.file_id}>'

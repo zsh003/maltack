@@ -1,28 +1,46 @@
-import { useRequest } from '@umijs/max';
-import { Card, Table, Tabs, Spin, Input } from 'antd';
+import { Card, Table, Input, Spin, Tabs } from 'antd';
 import type { FC } from 'react';
-import { useState } from 'react';
-import { getStrings } from '../service';
+import { useState, useEffect } from 'react';
+import useAnalysisModel from '@/models/analysis';
+import axios from "axios";
 
-const { Search } = Input;
 const { TabPane } = Tabs;
+const { Search } = Input;
 
 const StringAnalysis: FC = () => {
-  const { data, loading } = useRequest(() => getStrings());
+  const { currentFileId } = useAnalysisModel();
+  const [loading, setLoading] = useState(true);
+  const [data, setData] = useState<any>(null);
   const [searchText, setSearchText] = useState('');
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const { data } = await axios.get(`http://localhost:5000/api/v1/analysis/result/strings/${currentFileId}`);
+        setData(data);
+      } catch (error) {
+        console.error('获取字符串分析结果失败', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, [currentFileId]);
 
   if (loading) {
     return <Spin />;
   }
 
   const stringInfo = data?.string_info || {};
-  const { ascii_strings = [], unicode_strings = [] } = stringInfo;
 
-  const filterStrings = (strings: any[]) => {
-    if (!searchText) return strings;
-    return strings.filter((item) =>
-      item.string.toLowerCase().includes(searchText.toLowerCase()),
-    );
+  // 将字符串数据解析为数组
+  const parseStringData = (str: string) => {
+    try {
+      return JSON.parse(str);
+    } catch (e) {
+      return [];
+    }
   };
 
   const columns = [
@@ -31,49 +49,48 @@ const StringAnalysis: FC = () => {
       dataIndex: 'offset',
       key: 'offset',
       width: 120,
-      render: (offset: number) => `0x${offset.toString(16)}`,
+      render: (offset: number) => `0x${offset.toString(16).toUpperCase()}`,
     },
     {
       title: '字符串内容',
       dataIndex: 'string',
       key: 'string',
       ellipsis: true,
+      filteredValue: [searchText],
+      onFilter: (value: string, record) =>
+        record.string.toLowerCase().includes(value.toLowerCase()),
     },
   ];
 
   return (
-    <Card title="字符串分析">
-      <Search
-        placeholder="搜索字符串"
-        allowClear
-        onChange={(e) => setSearchText(e.target.value)}
-        style={{ marginBottom: 16 }}
-      />
-      <Tabs defaultActiveKey="ascii">
-        <TabPane tab="ASCII字符串" key="ascii">
+    <Card
+      title="字符串信息"
+      extra={
+        <Search
+          placeholder="搜索字符串"
+          onSearch={setSearchText}
+          style={{ width: 200 }}
+        />
+      }
+    >
+      <Tabs defaultActiveKey="1">
+        <TabPane tab="ASCII字符串" key="1">
           <Table
             columns={columns}
-            dataSource={filterStrings(ascii_strings)}
+            dataSource={parseStringData(stringInfo.ascii_strings)}
             rowKey="offset"
-            pagination={{
-              pageSize: 20,
-              showSizeChanger: true,
-              showQuickJumper: true,
-            }}
-            scroll={{ y: 400 }}
+            scroll={{ y: 300 }}
+            pagination={false}
           />
         </TabPane>
-        <TabPane tab="Unicode字符串" key="unicode">
+
+        <TabPane tab="Unicode字符串" key="2">
           <Table
             columns={columns}
-            dataSource={filterStrings(unicode_strings)}
+            dataSource={parseStringData(stringInfo.unicode_strings)}
             rowKey="offset"
-            pagination={{
-              pageSize: 20,
-              showSizeChanger: true,
-              showQuickJumper: true,
-            }}
-            scroll={{ y: 400 }}
+            scroll={{ y: 300 }}
+            pagination={false}
           />
         </TabPane>
       </Tabs>

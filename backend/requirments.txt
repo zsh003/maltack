@@ -12,3 +12,5 @@ sigma-cli
 python-dotenv==1.0.1
 pyyaml
 subprocess32
+lief==0.16.4
+numpy

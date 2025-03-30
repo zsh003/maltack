@@ -24,7 +24,7 @@ const App: React.FC = () => {
         // 获取上传后的文件ID并更新全局状态
         if (response && response.file_id) {
           updateCurrentFileId(response.file_id);
-          history.push(`/analysis/result/overview/${response.file_id}`);
+          history.push(`/analysis/result/basic-info/${response.file_id}`);
         }
       } else if (status === 'error') {
         message.error(`${info.file.name} 文件上传失败`);

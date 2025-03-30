@@ -1,10 +1,28 @@
-import { useRequest } from '@umijs/max';
 import { Card, Table, Tag, Spin } from 'antd';
 import type { FC } from 'react';
-import { getYaraRules } from '../service';
+import { useState, useEffect } from 'react';
+import useAnalysisModel from '@/models/analysis';
+import axios from "axios";
 
 const YaraMatches: FC = () => {
-  const { data, loading } = useRequest(() => getYaraRules());
+  const { currentFileId } = useAnalysisModel();
+  const [loading, setLoading] = useState(true);
+  const [data, setData] = useState<any>(null);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const { data } = await axios.get(`http://localhost:5000/api/v1/analysis/result/yara-rules/${currentFileId}`);
+        setData(data);
+      } catch (error) {
+        console.error('获取YARA规则匹配结果失败', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, [currentFileId]);
 
   if (loading) {
     return <Spin />;

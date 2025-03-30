@@ -9,6 +9,15 @@ from app.services.analysis import analyze_file
 from app.config import Config
 from app import db
 from app.models.model import UploadHistory
+
+from app.api.v1.features import (
+    save_byte_histogram, save_byte_entropy, save_pe_static_feature,
+    save_feature_engineering
+)
+from app.utils.feature_extraction import (
+    extract_byte_histogram, extract_byte_entropy,
+    extract_pe_static_features, extract_feature_engineering
+)
 # from app.services.upload_service import handle_file_upload
 
 app = Flask(__name__)
@@ -19,7 +28,7 @@ api_v1 = Blueprint('api_v1_bp', __name__)
 def hello_v1():
     return jsonify(get_hello_v1())
 
-@app.route('/login', methods=['POST'])
+@api_v1.route('/login', methods=['POST'])
 def login():
     from app.models.user import User
 
@@ -41,7 +50,7 @@ def login():
     else:
         return jsonify({'status': 'error', 'message': 'Invalid credentials'}), 401
 
-@app.route('/userinfo', methods=['GET'])
+@api_v1.route('/userinfo', methods=['GET'])
 def userinfo():
     # 这里可以添加 JWT 验证逻辑
     user_info = {'name': 'John Doe', 'email': 'john.doe@example.com'}
@@ -101,15 +110,62 @@ def upload_file():
         new_upload.status = "completed"
         db.session.commit()
 
-        return jsonify({'success': True, 'data': result, "message": "File uploaded and analyzed successfully", "file_id": new_upload.file_id} )
-   
     except Exception as e:
         app.logger.error(f'Analysis failed: {str(e)}')
         new_upload.status = "failed"
         db.session.commit()
-        return jsonify({'success': False, 'error': str(e)}), 500
     
-    return jsonify(result)
+
+    # 第二部分，提取特征
+    try: 
+        # 提取特征
+        with open(filepath, 'rb') as f:
+            file_content = f.read()
+            
+            # 提取字节直方图特征
+            histogram_data = extract_byte_histogram(file_content)
+            save_byte_histogram(new_upload.file_id, histogram_data)
+            app.logger.debug('histogram saved successfully')
+            
+            # 提取字节熵特征
+            entropy_data = extract_byte_entropy(file_content)
+            save_byte_entropy(new_upload.file_id, entropy_data)
+            app.logger.debug('entropy saved successfully')
+            
+            # 提取PE静态特征
+            pe_features = extract_pe_static_features(filepath)
+            for feature_type, feature_data in pe_features.items():
+                save_pe_static_feature(new_upload.file_id, feature_type, feature_data)
+            app.logger.debug('pe static feature saved successfully')
+            
+            # 提取特征工程数据
+            section_info, string_matches, yara_matches, opcode_features, boolean_features = \
+                extract_feature_engineering(filepath)
+            save_feature_engineering(
+                new_upload.file_id,
+                section_info,
+                string_matches,
+                yara_matches,
+                opcode_features,
+                boolean_features
+            )
+            app.logger.debug('feature engineering saved successfully')
+        
+        # 更新上传记录状态
+        new_upload.status = 'completed'
+        db.session.commit()
+        
+        return jsonify({
+            'message': '文件上传成功',
+            'file_id': new_upload.file_id
+        })
+    
+    except Exception as e:
+        if 'new_upload' in locals():
+            new_upload.status = 'failed'
+            new_upload.error_message = str(e)
+            db.session.commit()
+        return jsonify({'error': str(e)}), 500
 
 # 保存分析结果到数据库
 def save_analysis_results(file_id, result):

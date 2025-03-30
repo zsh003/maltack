@@ -1,13 +1,30 @@
-import { useRequest } from '@umijs/max';
 import { Card, Descriptions, Table, Tag, Spin, Tabs } from 'antd';
 import type { FC } from 'react';
-import { getAnalysisResult } from '../service';
+import { useState, useEffect } from 'react';
+import useAnalysisModel from '@/models/analysis';
+import axios from "axios";
 
 const { TabPane } = Tabs;
 
 const Overview: FC = () => {
+  const { currentFileId } = useAnalysisModel();
+  const [loading, setLoading] = useState(true);
+  const [data, setData] = useState<any>(null);
 
-  const { data, loading } = useRequest(() => getAnalysisResult());
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const { data } = await axios.get(`http://localhost:5000/api/v1/analysis/result/overview/${currentFileId}`);
+        setData(data);
+      } catch (error) {
+        console.error('获取分析结果失败', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, [currentFileId]);
 
   if (loading) {
     return <Spin />;
