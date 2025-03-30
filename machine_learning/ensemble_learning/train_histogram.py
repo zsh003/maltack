@@ -114,18 +114,25 @@ test_ds = tf.data.Dataset.from_tensor_slices((test_features, test_label)) \
 
 
 # 模型
+# 输入层：接收512维直方图特征
+inputs = layers.Input(shape=(LENGTH, 1), dtype='float32') # LENGTH=512
 
-inputs = layers.Input(shape=(LENGTH, 1), dtype='float32')
+# 特征重塑：将1D特征转换为2D伪图像 (32x16) WIDTH=32, HEIGHT=16
 re_inputs = tf.reshape(inputs, [-1, WIDTH, HEIGHT, 1])
+# 双卷积层设计：捕捉局部统计特征
+# 卷积层1：60个6x6的卷积核
 Conv_1 = layers.Conv2D(60, (2, 2), padding='same', activation='relu')(re_inputs)
-pool_1 = layers.MaxPooling2D()(Conv_1)
+pool_1 = layers.MaxPooling2D()(Conv_1) # 捕捉字节分布模式
+# 卷积层2：200个2x2的卷积核
 Conv_2 = layers.Conv2D(200, (2, 2), padding='same', activation='relu')(pool_1)
-pool_2 = layers.MaxPooling2D()(Conv_2)
+pool_2 = layers.MaxPooling2D()(Conv_2) # 提取高阶熵特征
+
 Flat = layers.Flatten()(pool_2)
-Dense_1 = layers.Dense(500, activation='relu')(Flat)
+# 全连接层：特征融合与分类
+Dense_1 = layers.Dense(500, activation='relu')(Flat) # 综合卷积特征
 dropout = layers.Dropout(0.2)(Dense_1)
 # Dense_2 = layers.Dense(50, activation='relu')(dropout)
-outputs = layers.Dense(1, activation='sigmoid')(Dense_1)
+outputs = layers.Dense(1, activation='sigmoid')(Dense_1) # 二分类输出
 
 model = models.Model(inputs=inputs, outputs=outputs)
 
@@ -144,4 +151,5 @@ model.fit(train_ds,
 predict = model.evaluate(test_ds)
 print(predict)
 
-model.save('../models/histogram_model.h5', save_format="tf")
+#model.save('../models/histogram_model.h5', save_format="tf")
+model.save('../models/histogram_{0:.2f}.h5'.format(predict[1]), save_format="tf")

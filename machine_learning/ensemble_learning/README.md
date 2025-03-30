@@ -900,5 +900,288 @@ for function in all_functions:
 
 
 
+### 0x40 模型训练
 
+
+
+#### 0x41 直方图特征模型部分
+
+针对直方图特征设计了一个卷积神经网络(CNN)模型，主要架构如下：
+
+复现论文：Deep Neural Network Based Malware Detection Using Two Dimensional
+
+模型架构：
+
+- 输入重塑（32x16）：将512维直方图转为二维矩阵，保留字节/熵值的空间分布特征 
+
+- 小卷积核（2x2）：捕捉局部统计模式，识别异常字节簇（如加密段） 
+
+- 通道数递增（60→200）：逐步提取高阶特征，发现复杂模式（如多态代码特征） 
+
+- 大密度层（500节点）：增强非线性表达能力，处理高度非线性的恶意模式 
+
+- Sigmoid输出：适配二分类任务（恶意/正常），输出恶意概率值
+
+```plaintext
+Input(512) → Reshape(32x16) → Conv(60) → Pool → Conv(200) → Pool → Dense(500) → Output(1)
+```
+```python
+# 输入层：接收512维直方图特征
+inputs = layers.Input(shape=(LENGTH, 1))  # LENGTH=512
+
+# 特征重塑：将1D特征转换为2D伪图像 (32x16)
+re_inputs = tf.reshape(inputs, [-1, WIDTH, HEIGHT, 1])  # WIDTH=32, HEIGHT=16
+
+# 双卷积层设计：捕捉局部统计特征
+Conv_1 = layers.Conv2D(60, (2,2), activation='relu')(re_inputs)  # 捕捉字节分布模式
+Conv_2 = layers.Conv2D(200, (2,2), activation='relu')(pool_1)     # 提取高阶熵特征
+
+# 池化层
+pool_1 = layers.MaxPooling2D()(Conv_1) # 捕捉字节分布模式
+pool_2 = layers.MaxPooling2D()(Conv_2) # 提取高阶熵特征
+Flat = layers.Flatten()(pool_2)
+
+# 全连接层：特征融合与分类
+Dense_1 = layers.Dense(500, activation='relu')(Flat)  # 综合卷积特征
+outputs = layers.Dense(1, activation='sigmoid')(Dense_1)  # 二分类输出
+```
+
+优化部分：
+
+1. **正则化配置**：
+
+```python
+dropout = layers.Dropout(0.2)(Dense_1)  # 20%的神经元丢弃率
+```
+
+2. **训练优化：**
+
+```python
+# 早停机制（6轮耐心值）
+EarlyStopping(monitor='val_loss', patience=6)  
+
+# 动态学习率调整（4轮无改善后降半）
+ReduceLROnPlateau(patience=4, factor=0.5)
+```
+
+适合检测具有以下行为的样本：
+
+1. 代码加密/混淆 （高熵值区域异常分布）
+2. 数据填充攻击 （连续重复字节模式）
+3. 内存驻留木马 （特殊字节分布模式）
+
+
+
+#### 0x42 PE特征模型部分
+
+通过PE文件的967维结构化特征（节区信息/导入表/字符串等）训练多个基模型
+
+```python
+# 训练的9个基模型
+models = [
+    'lr'    : LogisticRegression,        # 逻辑回归
+    'gbc'   : GradientBoostingClassifier, # 梯度提升树
+    'bc'    : BaggingClassifier,        # 袋装法集成
+    'xgb'   : XGBClassifier,            # XGBoost
+    'dt'    : DecisionTreeClassifier,   # 决策树
+    'svm'   : LinearSVC,                # 支持向量机
+    'rfc'   : RandomForestClassifier,   # 随机森林
+    'etc'   : ExtraTreesClassifier,     # 极端随机树
+    'ada'   : AdaBoostClassifier        # AdaBoost
+]
+```
+
+
+采用二级集成学习架构进行集成：
+
+```plaintext
+第一层：9个异构基模型 → 第二层：随机森林元模型（rfc_pe_model）
+```
+
+基模型通过5折交叉验证生成OOF预测结果，将OOF处理后的训练集堆叠，再训练随机森林元模型
+
+
+
+OOF的作用：
+
+* 对每个折叠，模型仅在 `kf_x_train`（训练集部分）训练，并在 `kf_x_test`（验证集部分）预测，确保预测结果未见过验证集数据。
+
+- 最终 `oof_train` 是完整训练集的OOF预测（每个样本的预测来自未训练该样本的模型），`oof_test` 是测试集的平均预测。
+
+- OOF保证堆叠特征无过拟合风险，因为每个样本的预测来自未见过该样本的模型。
+
+
+
+训练随机森林元模型的作用：
+
+将9个基模型的OOF预测结果通过随机森林进一步抽象为单一训练集，作为后续模型的输入。使用 `rfc_pe_model` 对9个经OOF后的训练集进行堆叠和训练，理论上可以捕捉基模型之间的非线性关系。
+
+
+
+```mermaid
+graph TB
+    subgraph 基模型层
+        A[LogisticRegression] --> J[OOF预测]
+        B[GradientBoosting] --> J
+        C[XGBoost] --> J
+        D[Bagging] --> J
+        E[DecisionTree] --> J
+        F[SVM] --> J
+        G[RandomForest] --> J
+        H[ExtraTrees] --> J
+        I[AdaBoost] --> J
+    end
+    J --> K[特征堆叠]
+    K --> L[随机森林元模型]
+```
+
+
+
+
+
+该方法是集成学习中的一种，名为Stacking（堆叠）：用元模型整合基模型的预测结果。另外还有两种，分别是Bagging和Boosting。Bagging（如随机森林）：并行训练多个基模型，通过投票或平均融合结果。Boosting（如AdaBoost、GBDT）：顺序训练基模型，调整样本权重或模型权重。
+
+基模型与元模型的概念：
+
+1. **基模型**：
+   - **角色**：集成学习中的底层模型，直接对原始数据进行学习。
+   - **特点**：可以是同质模型（如随机森林中的多个决策树），也可以是异质模型（如同时用SVM、决策树、神经网络）。
+   - **目标**：提供多样化的预测视角，减少整体偏差或方差。
+2. **元模型**：
+   - **角色**：在堆叠法（Stacking）中，用于综合基模型的预测结果。
+   - **输入**：基模型的输出（如分类概率、回归值）作为特征。
+   - **示例**：逻辑回归、线性回归、甚至另一个复杂的模型（如神经网络）。
+
+
+
+加权融合（Weighted Fusion）概念：
+
+**定义**：对不同基模型的预测结果赋予不同权重，通过加权平均或投票得到最终结果。
+
+**应用场景**：
+
+- **回归任务**：加权平均各模型的预测值（如：模型A权重0.7，模型B权重0.3）。
+- **分类任务**：加权投票（如模型A的投票权重更高）。
+- **动态调整**：根据模型在验证集上的表现分配权重（如准确率高的模型权重大）。
+
+**例子**：
+三个基模型的分类概率分别为 [0.8, 0.2]、[0.6, 0.4]、[0.7, 0.3]，权重为 [0.5, 0.3, 0.2]，则加权融合结果为：
+`(0.5*0.8 + 0.3*0.6 + 0.2*0.7, 0.5*0.2 + 0.3*0.4 + 0.2*0.3) = (0.74, 0.26)`，最终预测为第一类。
+
+
+
+堆叠（Stacking）概念：
+
+**定义**：分层集成方法，基模型的输出作为元模型的输入特征，训练元模型进行最终预测。
+
+**步骤**：
+
+1. **基模型训练**：用训练数据训练多个基模型（如SVM、决策树、KNN）。
+2. **生成元特征**：基模型对训练数据的预测结果作为新特征。
+3. **训练元模型**：用新特征和原始标签训练元模型（如线性回归）。
+4. **预测**：基模型预测测试数据，生成元特征后由元模型输出最终结果。
+
+**关键点**：
+
+- **防过拟合**：通常用K折交叉验证生成元特征。例如，将训练集分为5折，每次用4折训练基模型，预测第5折，避免基模型在训练集上过拟合。
+- **异质模型**：基模型需多样化（如同时用树模型、线性模型），提供互补信息。
+
+
+
+总结：
+
+- **集成学习**：通过组合模型提升性能，核心是降低方差（Bagging）或偏差（Boosting）。
+- **基模型与元模型**：基模型负责初级预测，元模型负责高阶组合。
+- **加权融合**：根据信任度分配权重，简单高效。
+- **堆叠**：通过元模型学习基模型的关系，适合复杂任务，但计算成本较高。
+
+这种方法常用于竞赛（如Kaggle）和实际场景中，以突破单一模型的天花板。
+
+
+
+
+
+### 0x50 特征工程模型部分
+
+
+
+
+
+### 0x60 预测流程
+
+模型架构
+
+```mermaid
+graph TD
+	subgraph 基模型一层
+        A
+        B
+        E
+        C
+	end
+	subgraph 基模型二层
+		D
+		H
+		F
+	end
+	subgraph 元模型决策层
+		I
+		J
+		K
+		L
+	end
+    A[直方图特征] --> D(CNN模型)
+    B[PE静态特征] --> E[9基模型集成]
+    E(9基模型集成) --> H(RamdomForest元模型)
+    C[特征工程所得特征] --> F(LightGBM模型)
+    D --> I[集成学习]
+    F --> I
+    H --> I
+    I --> J[LogisticRegression]
+    I --> K[RandomForest]
+    J --> L[加权融合]
+   	K --> L
+    L --> Z{最终预测}
+```
+
+该设计实现了：
+
+1. 异构特征并行处理（统计特征+结构特征）
+2. 两级模型集成（基模型堆叠+结果加权）
+3. 多维度恶意模式检测能力互补
+
+
+
+#### 0x61 基模型处理
+
+```python
+# 多进程并行预测（L40-75）
+for name in raw_feature_names:  # 遍历9个基模型
+    pool = Pool(10)
+    for i, model in enumerate(pe_raw_models[name]):
+        pool.apply_async(pe_raw_predict, (i, model)) # 并行预测
+    # 取5折结果的平均值
+    oof_test = np.mean(oof_test_skf) 
+    stacking_test.append(oof_test)  # 堆叠预测结果
+```
+
+
+
+#### 0x62 预测融合
+
+```python
+# 三级融合策略
+test = np.hstack([
+    histogram_test,   # 直方图CNN模型预测结果
+    raw_feature_test,  # PE特征集成模型结果
+    feature_engineerin_test # 特征工程模型结果
+])
+
+# 加权投票（6:4比例）
+for x, y in zip(lr_prob, rfc_prob):
+    if x[1]*0.6 + y[1]*0.4 < 0.5:
+        final_label = 0
+    else:
+        final_label = 1
+```
 
