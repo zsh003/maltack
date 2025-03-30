@@ -122,10 +122,10 @@ re_inputs = tf.reshape(inputs, [-1, WIDTH, HEIGHT, 1])
 # 双卷积层设计：捕捉局部统计特征
 # 卷积层1：60个6x6的卷积核
 Conv_1 = layers.Conv2D(60, (2, 2), padding='same', activation='relu')(re_inputs)
-pool_1 = layers.MaxPooling2D()(Conv_1) # 捕捉字节分布模式
+pool_1 = layers.MaxPooling2D(pool_size=(2, 2))(Conv_1) # 捕捉字节分布模式
 # 卷积层2：200个2x2的卷积核
 Conv_2 = layers.Conv2D(200, (2, 2), padding='same', activation='relu')(pool_1)
-pool_2 = layers.MaxPooling2D()(Conv_2) # 提取高阶熵特征
+pool_2 = layers.MaxPooling2D(pool_size=(2, 2))(Conv_2) # 提取高阶熵特征
 
 Flat = layers.Flatten()(pool_2)
 # 全连接层：特征融合与分类
@@ -151,5 +151,4 @@ model.fit(train_ds,
 predict = model.evaluate(test_ds)
 print(predict)
 
-#model.save('../models/histogram_model.h5', save_format="tf")
-model.save('../models/histogram_{0:.2f}.h5'.format(predict[1]), save_format="tf")
+model.save('../models/histogram_model.h5', save_format="tf")

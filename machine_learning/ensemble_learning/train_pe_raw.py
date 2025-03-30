@@ -36,6 +36,10 @@ from sklearn.metrics import accuracy_score
 
 from raw_features import PEFeatureExtractor
 
+# import warnings
+# from sklearn.exceptions import ConvergenceWarning
+# warnings.filterwarnings("ignore", category=ConvergenceWarning)
+
 with open("../models/hash_list.pkl", "rb") as f:
     hash_list = pickle.load(f)
 test_num = len(hash_list)
@@ -68,7 +72,7 @@ pe_raw_feature_label = train_features
 bc_model = BaggingClassifier(n_estimators=100)
 gbc_model = GradientBoostingClassifier()
 lr_model = LogisticRegression(max_iter=5000)
-svm_model = svm.LinearSVC(max_iter=10000)
+svm_model = svm.LinearSVC(max_iter=50000)
 dt_model = DecisionTreeClassifier()
 xgb_model = XGBClassifier(max_depth=7, learning_rate=0.05, n_estimators=500)
 

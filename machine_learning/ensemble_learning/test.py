@@ -74,7 +74,7 @@ for name in raw_feature_names:
 stacking_test = np.hstack(stacking_test)
 raw_feature_test = rfc_pe_model.predict(stacking_test).reshape(-1, 1)
 
-"""
+
 # ---------------------特征工程------------------------
 
 print("Feature Engineering predict: {0:.2f}s".format(time.time()-start_time))
@@ -82,7 +82,7 @@ start_time = time.time()
 with open("../feature_engineering/feature_engineering_features.pkl", 'rb') as f:
     feature_engineering_features = pickle.load(f)
 
-with open("../models/keys.pkl", 'rb') as f:
+with open("../models/feature_engineering_keys.pkl", 'rb') as f:
     keys = pickle.load(f)
 
 with open("../models/lgb_models.pkl", "rb") as fp:
@@ -98,7 +98,7 @@ for i, model in enumerate(lgb_models):
     oof_test_skf[i, :] = model.predict(train_df, num_iteration=model.best_iteration)
 
 feature_engineerin_test = oof_test_skf.mean(axis=0).reshape(-1, 1)
-"""
+
 
 # ---------------------集成学习------------------------
 
@@ -107,8 +107,7 @@ start_time = time.time()
 with open("../models/lr_rfc.pkl", "rb") as f:
     lr_rfc = pickle.load(f)
 
-test = np.hstack([histogram_test , raw_feature_test])
-#test = np.hstack([feature_engineerin_test, histogram_test , raw_feature_test])
+test = np.hstack([feature_engineerin_test, histogram_test, raw_feature_test])
 
 labels_lr = lr_rfc[0].predict_proba(test)
 labels_rfc = lr_rfc[1].predict_proba(test)

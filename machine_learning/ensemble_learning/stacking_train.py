@@ -61,7 +61,7 @@ def plot(test_label, y_pred, model):
     _ = plt.setp(text, color="blue") 
   
 
-# -----------------直方图元模型训练集-----------------
+# -----------------直方图基模型（二层）训练集-----------------
 
 with open("../models/raw_his_feature.pkl", "rb") as fp:
     raw_his_feature = pickle.load(fp)
@@ -70,11 +70,11 @@ with open("../models/raw_his_labels.pkl", "rb") as fp:
     raw_his_labels = pickle.load(fp)
 
 features, labels = np.array(raw_his_feature, dtype=np.float32), np.array(raw_his_labels, dtype=np.int32)
-model = tf.keras.models.load_model('../models/histogram_0.50.h5')
+model = tf.keras.models.load_model('../models/histogram_model.h5')
 histogram_train = model.predict(features)
 
 
-# -----------------pe静态特征元模型训练集-----------------
+# -----------------pe静态特征基模型（二层）训练集-----------------
 with open("../models/labels.pkl", "rb") as f:
     labels = pickle.load(f)
 
@@ -101,10 +101,14 @@ with open("../models/rfc_pe_model.pkl", "wb") as f:
     pickle.dump(rfc_pe_model, f)
 
 
-# ---------------------基模型堆叠------------------------
+# -----------------特征工程基模型（二层）训练集-----------------
 
-train = np.hstack([histogram_train , raw_feature_train])
-#train = np.hstack([feature_engineerin_train, histogram_train , raw_feature_train])
+with open("../oof/feature_engineerin_train.pkl", "rb") as fp:
+    feature_engineerin_train = pickle.load(fp)
+
+# ---------------------二层基模型堆叠------------------------
+
+train = np.hstack([feature_engineerin_train, histogram_train , raw_feature_train])
 stacking_train_5 = train
 
 train_data, test_data, train_labels, test_labels = train_test_split(stacking_train_5,
@@ -140,7 +144,7 @@ params = {'num_leaves': 8, #结果对最终效果影响较大，越大值越好�
           "nthread": -1,				#线程数量，-1表示全部线程，线程越多，运行的速度越快
           'metric': {'binary_logloss'},	##评价函数选择
           "random_state": 5555,	#随机数种子，可以防止每次运行的结果不一致
-          # 'device': 'gpu' ##如果安装的事gpu版本的lightgbm,可以加快运算
+          # 'device': 'gpu' ##如果安装的是gpu版本的lightgbm,可以加快运算
 }
 trn_data = lgb.Dataset(train_data, label=train_labels)
 val_data = lgb.Dataset(test_data, label=test_labels)

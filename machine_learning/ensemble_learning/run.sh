@@ -5,6 +5,7 @@ start_time=$(date +%s)
 python run.py $1
 python train_histogram.py
 python train_pe_raw.py
+python train_feature_engineering.py
 python stacking_train.py
 python test.py
 
