@@ -1103,7 +1103,7 @@ graph TB
 
 ### 0x50 特征工程模型部分
 
-
+通过LightGBM算法进行模型构建
 
 
 
@@ -1132,7 +1132,7 @@ graph TD
 	end
     A[直方图特征] --> D(CNN模型)
     B[PE静态特征] --> E[9基模型集成]
-    E(9基模型集成) --> H(RamdomForest元模型)
+    E(9基模型集成) --> H(RamdomForest模型)
     C[特征工程所得特征] --> F(LightGBM模型)
     D --> I[集成学习]
     F --> I

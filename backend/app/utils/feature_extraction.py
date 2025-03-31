@@ -5,26 +5,17 @@ import re
 import yara
 import os
 
-def calculate_entropy(data):
-    """计算字节熵"""
-    if not data:
-        return 0
-    counts = Counter(data)
-    probs = [count/len(data) for count in counts.values()]
-    return -sum(p * np.log2(p) for p in probs)
+from .raw_features import ByteHistogram, ByteEntropyHistogram, PEFeatureExtractor
 
 def extract_byte_histogram(file_content):
     """提取字节直方图特征"""
-    byte_counts = Counter(file_content)
-    return {byte: count for byte, count in byte_counts.items()}
+    Histogram = ByteHistogram().raw_features(file_content, None)
+    return {i: value for i, value in enumerate(list(Histogram))}
 
 def extract_byte_entropy(file_content):
     """提取字节熵特征"""
-    entropy_values = {}
-    for byte in range(256):
-        byte_data = bytes([byte])
-        entropy_values[byte] = calculate_entropy(byte_data)
-    return entropy_values
+    Byte_Entropy = ByteEntropyHistogram().raw_features(file_content, None)
+    return {i: value for i, value in enumerate(list(Byte_Entropy))}
 
 def extract_pe_static_features(filepath):
     """提取PE静态特征"""
