@@ -511,6 +511,7 @@ section_sizes_hashed = FeatureHasher(50, input_type="pair").transform([section_s
   - 键 `.text` 被哈希到索引 `40`，且符号为 `-1`，因此 `502784 * -1 = -502784`。
   - 类似地，`.rdata` 的符号为 `+1`，哈希到索引 `14`，因此值为 `118272`。
 - **稀疏性**：
+  
   - 大部分位置为 `0`，因为只有 4 个键值对参与哈希。
 
 符号对哈希冲突的影响：
@@ -1110,6 +1111,8 @@ graph TB
 ### 0x60 预测流程
 
 模型架构
+
+![image-20250331091905033](README.assets/image-20250331091905033.png)
 
 ```mermaid
 graph TD

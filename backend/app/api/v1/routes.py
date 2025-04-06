@@ -129,6 +129,7 @@ def upload_file():
             
             # 提取字节熵特征
             entropy_data = extract_byte_entropy(file_content)
+            app.logger.debug('entropy extracted successfully')
             save_byte_entropy(new_upload.file_id, entropy_data)
             app.logger.debug('entropy saved successfully')
             

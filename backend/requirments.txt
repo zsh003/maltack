@@ -14,5 +14,4 @@ pyyaml
 subprocess32
 lief==0.16.4
 numpy
-scikit-learn==2.2.0
-hashlib
+scikit-learn

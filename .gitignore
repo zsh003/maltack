@@ -1,0 +1,7 @@
+.idea/
+.venv/
+node_moddules/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
