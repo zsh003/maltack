@@ -1,7 +1,11 @@
-flask==2.2.5
-flask-cors==3.0.10
-numpy
-pandas
-scikit-learn
+scikit-learn==1.6.1
 sqlite3-api==2.0.4
-pefile
+pefile==2024.8.26
+fastapi==0.115.12
+uvicorn==0.34.0
+python-multipart==0.0.20
+python-jose==3.4.0
+passlib==1.7.4
+bcrypt==4.3.0
+numpy==2.2.4
+pandas==2.2.3

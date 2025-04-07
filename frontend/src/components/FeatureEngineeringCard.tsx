@@ -333,7 +333,40 @@ const FeatureEngineeringCard: React.FC<FeatureEngineeringCardProps> = ({
           </Row>
         </Panel>
         
-        <Panel header="字符串匹配详情" key="2">
+        <Panel header="敏感恶意信息检测" key="2">
+          <Row gutter={[16, 16]}>
+            <Col span={12}>
+              <Statistic
+                  title="杀毒软件检测"
+                  value={stringCount.av_count}
+                  prefix={<ExclamationCircleOutlined />}
+                  valueStyle={{ color: stringCount.av_count > 0 ? '#cf1322' : '#3f8600' }}
+              />
+            </Col>
+            <Col span={12}>
+              <Statistic
+                  title="调试器检测"
+                  value={stringCount.dbg_count}
+                  prefix={<ExclamationCircleOutlined />}
+                  valueStyle={{ color: stringCount.dbg_count > 0 ? '#cf1322' : '#3f8600' }}
+              />
+            </Col>
+            <Col span={12}>
+              <Statistic
+                  title="矿池名称"
+                  value={stringCount.pool_name_count}
+                  valueStyle={{ color: stringCount.pool_name_count > 5 ? '#cf1322' : '#3f8600' }}
+              />
+            </Col>
+            <Col span={12}>
+              <Statistic
+                  title="加密算法"
+                  value={stringCount.algorithm_name_count}
+                  valueStyle={{ color: stringCount.algorithm_name_count > 2 ? '#cf1322' : '#3f8600' }}
+              />
+            </Col>
+          </Row>
+
           <Row gutter={[16, 16]}>
             <Col span={8}>
               <Card size="small" title="加密货币钱包">
@@ -356,20 +389,7 @@ const FeatureEngineeringCard: React.FC<FeatureEngineeringCardProps> = ({
             </Col>
           </Row>
 
-          <Descriptions title="字符串匹配特征" column={3} style={{ marginTop: 16 }}>
-            <Descriptions.Item label="MZ标记数量">{stringMatch.mz_count}</Descriptions.Item>
-            <Descriptions.Item label="MZ平均长度">{stringMatch.mz_mean}</Descriptions.Item>
-            <Descriptions.Item label="PE标记数量">{stringMatch.pe_count}</Descriptions.Item>
-            <Descriptions.Item label="PE平均长度">{stringMatch.pe_mean}</Descriptions.Item>
-            <Descriptions.Item label="矿池关键词数量">{stringMatch.pool_count}</Descriptions.Item>
-            <Descriptions.Item label="矿池平均长度">{stringMatch.pool_mean}</Descriptions.Item>
-            <Descriptions.Item label="CPU关键词数量">{stringMatch.cpu_count}</Descriptions.Item>
-            <Descriptions.Item label="CPU平均长度">{stringMatch.cpu_mean}</Descriptions.Item>
-            <Descriptions.Item label="GPU关键词数量">{stringMatch.gpu_count}</Descriptions.Item>
-            <Descriptions.Item label="GPU平均长度">{stringMatch.gpu_mean}</Descriptions.Item>
-            <Descriptions.Item label="数字货币关键词数量">{stringMatch.coin_count}</Descriptions.Item>
-            <Descriptions.Item label="数字货币平均长度">{stringMatch.coin_mean}</Descriptions.Item>
-          </Descriptions>
+
 
         </Panel>
         
@@ -391,40 +411,24 @@ const FeatureEngineeringCard: React.FC<FeatureEngineeringCardProps> = ({
           </div>
         </Panel>
         
-        <Panel header="字符串扫描详情" key="4">
-          <Row gutter={[16, 16]}>
-            <Col span={12}>
-              <Statistic 
-                title="杀毒软件检测" 
-                value={stringCount.av_count} 
-                prefix={<ExclamationCircleOutlined />} 
-                valueStyle={{ color: stringCount.av_count > 0 ? '#cf1322' : '#3f8600' }}
-              />
-            </Col>
-            <Col span={12}>
-              <Statistic 
-                title="调试器检测" 
-                value={stringCount.dbg_count} 
-                prefix={<ExclamationCircleOutlined />} 
-                valueStyle={{ color: stringCount.dbg_count > 0 ? '#cf1322' : '#3f8600' }}
-              />
-            </Col>
-            <Col span={12}>
-              <Statistic 
-                title="矿池名称" 
-                value={stringCount.pool_name_count} 
-                valueStyle={{ color: stringCount.pool_name_count > 5 ? '#cf1322' : '#3f8600' }}
-              />
-            </Col>
-            <Col span={12}>
-              <Statistic 
-                title="加密算法" 
-                value={stringCount.algorithm_name_count} 
-                valueStyle={{ color: stringCount.algorithm_name_count > 2 ? '#cf1322' : '#3f8600' }}
-              />
-            </Col>
-          </Row>
-          <Card title="字符串匹配特征分析" style={{ marginTop: 16 }}>
+        <Panel header="字符串特征匹配详情" key="4">
+
+          <Descriptions title="字符串特征匹配" column={3} style={{ marginTop: 16 }}>
+            <Descriptions.Item label="MZ标记数量">{stringMatch.mz_count}</Descriptions.Item>
+            <Descriptions.Item label="MZ平均长度">{stringMatch.mz_mean}</Descriptions.Item>
+            <Descriptions.Item label="PE标记数量">{stringMatch.pe_count}</Descriptions.Item>
+            <Descriptions.Item label="PE平均长度">{stringMatch.pe_mean}</Descriptions.Item>
+            <Descriptions.Item label="矿池关键词数量">{stringMatch.pool_count}</Descriptions.Item>
+            <Descriptions.Item label="矿池平均长度">{stringMatch.pool_mean}</Descriptions.Item>
+            <Descriptions.Item label="CPU关键词数量">{stringMatch.cpu_count}</Descriptions.Item>
+            <Descriptions.Item label="CPU平均长度">{stringMatch.cpu_mean}</Descriptions.Item>
+            <Descriptions.Item label="GPU关键词数量">{stringMatch.gpu_count}</Descriptions.Item>
+            <Descriptions.Item label="GPU平均长度">{stringMatch.gpu_mean}</Descriptions.Item>
+            <Descriptions.Item label="数字货币关键词数量">{stringMatch.coin_count}</Descriptions.Item>
+            <Descriptions.Item label="数字货币平均长度">{stringMatch.coin_mean}</Descriptions.Item>
+          </Descriptions>
+
+          <Card title="字符串特征匹配分析" style={{ marginTop: 16 }}>
             <ReactECharts option={stringMatchChartOption} style={{ height: 400 }} />
           </Card>
         </Panel>

@@ -22,7 +22,7 @@ export async function uploadSample(file: File) {
   
   const response = await api.post('/upload', formData, {
     headers: {
-      'Content-Type': 'multipart/form-data',
+      'Content-Type': 'multipart/form-data'
     },
   });
   
