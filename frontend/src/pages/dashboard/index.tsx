@@ -244,7 +244,7 @@ const Dashboard: React.FC = () => {
         <Card title="最近分析的样本" style={{ marginTop: '16px' }}>
           <Table 
             columns={columns} 
-            dataSource={samples.slice(0, 10)} 
+            dataSource={samples.slice(0, 5)}
             rowKey="id" 
             onRow={(record) => ({
               onClick: () => {

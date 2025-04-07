@@ -84,6 +84,9 @@ const HomePage: React.FC = () => {
         <Button style={{ marginLeft: '16px' }} size="large" onClick={() => history.push('/samples')}>
           查看所有样本
         </Button>
+        <Button style={{ marginLeft: '16px' }} size="large" onClick={() => history.push('/dashboard')}>
+          仪表盘
+        </Button>
       </div>
 
       <Row gutter={[16, 16]}>
