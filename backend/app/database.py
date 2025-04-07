@@ -64,6 +64,22 @@ def init_db():
         FOREIGN KEY (sample_id) REFERENCES samples (id)
     )
     ''')
+
+    # LIEF分析表
+    cursor.execute('DROP TABLE IF EXISTS lief_features')
+    cursor.execute('''
+    CREATE TABLE IF NOT EXISTS lief_features (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        sample_id INTEGER,
+        dos_header TEXT,
+        pe_header TEXT,
+        sections TEXT,
+        imports TEXT,
+        tls_info TEXT,
+        resources TEXT,
+        FOREIGN KEY (sample_id) REFERENCES samples (id)
+    )
+    ''')
     
     conn.commit()
     conn.close()
@@ -143,6 +159,27 @@ def insert_engineered_features(sample_id, section_features, string_match, yara_m
     conn.commit()
     conn.close()
 
+def insert_lief_features(sample_id, dos_header, pe_header, sections, imports, tls_info, resources):
+    """插入LIEF分析特征"""
+    conn = sqlite3.connect(DB_PATH)
+    cursor = conn.cursor()
+
+    conn.execute('''
+    INSERT INTO lief_features (sample_id, dos_header, pe_header, sections, imports, tls_info, resources)
+    VALUES (?, ?, ?, ?, ?, ?, ?)
+    ''', (
+        sample_id,
+        json.dumps(dos_header),
+        json.dumps(pe_header),
+        json.dumps(sections),
+        json.dumps(imports),
+        json.dumps(tls_info),
+        json.dumps(resources)
+    ))
+
+    conn.commit()
+    conn.close()
+
 def get_all_samples():
     """获取所有样本的基本信息"""
     conn = sqlite3.connect(DB_PATH)
@@ -200,5 +237,19 @@ def get_sample_by_id(sample_id):
             'opcode_features': json.loads(eng_features['opcode_features'])
         }
     
+    # 获取LIEF特征
+    cursor.execute('SELECT * FROM lief_features WHERE sample_id = ?', (sample_id,))
+    row = cursor.fetchone()
+    if row:
+        lief_features = dict(row)
+        sample['lief_features'] = {
+            'dos_header': json.loads(lief_features['dos_header']),
+            'header': json.loads(lief_features['pe_header']),
+            'sections': json.loads(lief_features['sections']),
+            'imports': json.loads(lief_features['imports']),
+            'tls_info': json.loads(lief_features['tls_info']),
+            'resources': json.loads(lief_features['resources'])
+        }
+    
     conn.close()
-    return sample 
+    return sample

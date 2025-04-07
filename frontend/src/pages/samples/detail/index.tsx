@@ -1,241 +1,200 @@
-import React from 'react';
-import { PageContainer } from '@ant-design/pro-layout';
-import { Card, Row, Col, Statistic, Table, Descriptions } from 'antd';
+import React, { useEffect, useState } from 'react';
 import { useParams } from 'umi';
+import { Spin, Typography, Descriptions, Card, Tag, Tabs, Result, Row, Col, Divider } from 'antd';
+import { FileTextOutlined, WarningOutlined, CheckCircleOutlined } from '@ant-design/icons';
 import { fetchSampleDetail } from '@/services/api';
-import ReactECharts from 'echarts-for-react';
-import { useRequest } from 'ahooks';
+import ByteHistogramChart from '@/components/ByteHistogramChart';
+import EntropyHistogramChart from '@/components/EntropyHistogramChart';
+import PEFeaturesCard from '@/components/PEFeaturesCard';
+import FeatureEngineeringCard from '@/components/FeatureEngineeringCard';
+import LiefAnalysisCard from '@/components/LiefAnalysisCard';
 
-const SampleDetail: React.FC = () => {
+const { Title, Paragraph } = Typography;
+const { TabPane } = Tabs;
+
+const SampleDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
-  const { data: sample, loading } = useRequest(() => fetchSampleDetail(Number(id)));
+  const [loading, setLoading] = useState(true);
+  const [sample, setSample] = useState<any>(null);
+  const [error, setError] = useState<string | null>(null);
 
-  if (loading || !sample) {
-    return <div>Loading...</div>;
+  useEffect(() => {
+    const loadSample = async () => {
+      setLoading(true);
+      try {
+        const data = await fetchSampleDetail(parseInt(id));
+        setSample(data);
+      } catch (error) {
+        console.error('加载样本详情失败', error);
+        setError('加载样本详情失败，请稍后重试');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadSample();
+  }, [id]);
+
+  if (loading) {
+    return (
+      <div style={{ textAlign: 'center', padding: '100px' }}>
+        <Spin size="large" tip="正在加载样本详情..." />
+      </div>
+    );
   }
 
-  // 节区特征图表配置
-  const sectionChartOption = {
-    title: {
-      text: '节区特征分布',
-      left: 'center'
-    },
-    tooltip: {
-      trigger: 'axis',
-      axisPointer: {
-        type: 'shadow'
-      }
-    },
-    legend: {
-      data: ['大小', '熵值'],
-      top: 30
-    },
-    grid: {
-      left: '3%',
-      right: '4%',
-      bottom: '3%',
-      containLabel: true
-    },
-    xAxis: {
-      type: 'category',
-      data: ['可读', '可写', '可执行']
-    },
-    yAxis: [
-      {
-        type: 'value',
-        name: '大小',
-        position: 'left'
-      },
-      {
-        type: 'value',
-        name: '熵值',
-        position: 'right'
-      }
-    ],
-    series: [
-      {
-        name: '大小',
-        type: 'bar',
-        data: [
-          sample.engineered_features.section_features.size_R,
-          sample.engineered_features.section_features.size_W,
-          sample.engineered_features.section_features.size_X
-        ]
-      },
-      {
-        name: '熵值',
-        type: 'line',
-        yAxisIndex: 1,
-        data: [
-          sample.engineered_features.section_features.entr_R,
-          sample.engineered_features.section_features.entr_W,
-          sample.engineered_features.section_features.entr_X
-        ]
-      }
-    ]
-  };
-
-  // 节区权重图表配置
-  const sectionWeightChartOption = {
-    title: {
-      text: '节区权重分布',
-      left: 'center'
-    },
-    tooltip: {
-      trigger: 'item'
-    },
-    legend: {
-      orient: 'vertical',
-      left: 'left'
-    },
-    series: [
-      {
-        name: '节区权重',
-        type: 'pie',
-        radius: '50%',
-        data: [
-          { value: sample.engineered_features.section_features.size_R_weight, name: '可读权重' },
-          { value: sample.engineered_features.section_features.size_W_weight, name: '可写权重' },
-          { value: sample.engineered_features.section_features.size_X_weight, name: '可执行权重' }
-        ],
-        emphasis: {
-          itemStyle: {
-            shadowBlur: 10,
-            shadowOffsetX: 0,
-            shadowColor: 'rgba(0, 0, 0, 0.5)'
-          }
-        }
-      }
-    ]
-  };
-
-  // 字符串匹配特征图表配置
-  const stringMatchChartOption = {
-    title: {
-      text: '字符串匹配特征',
-      left: 'center'
-    },
-    tooltip: {
-      trigger: 'axis',
-      axisPointer: {
-        type: 'shadow'
-      }
-    },
-    legend: {
-      data: ['数量', '平均长度'],
-      top: 30
-    },
-    grid: {
-      left: '3%',
-      right: '4%',
-      bottom: '3%',
-      containLabel: true
-    },
-    xAxis: {
-      type: 'category',
-      data: ['MZ', 'PE', '矿池', 'CPU', 'GPU', '数字货币']
-    },
-    yAxis: [
-      {
-        type: 'value',
-        name: '数量',
-        position: 'left'
-      },
-      {
-        type: 'value',
-        name: '平均长度',
-        position: 'right'
-      }
-    ],
-    series: [
-      {
-        name: '数量',
-        type: 'bar',
-        data: [
-          sample.engineered_features.string_match.mz_count,
-          sample.engineered_features.string_match.pe_count,
-          sample.engineered_features.string_match.pool_count,
-          sample.engineered_features.string_match.cpu_count,
-          sample.engineered_features.string_match.gpu_count,
-          sample.engineered_features.string_match.coin_count
-        ]
-      },
-      {
-        name: '平均长度',
-        type: 'line',
-        yAxisIndex: 1,
-        data: [
-          sample.engineered_features.string_match.mz_mean,
-          sample.engineered_features.string_match.pe_mean,
-          sample.engineered_features.string_match.pool_mean,
-          sample.engineered_features.string_match.cpu_mean,
-          sample.engineered_features.string_match.gpu_mean,
-          sample.engineered_features.string_match.coin_mean
-        ]
-      }
-    ]
-  };
+  if (error || !sample) {
+    return (
+      <Result
+        status="error"
+        title="加载失败"
+        subTitle={error || '未能找到指定样本'}
+      />
+    );
+  }
 
   return (
-    <PageContainer>
-      <Card title="样本基本信息">
-        <Descriptions>
-          <Descriptions.Item label="文件名称">{sample.file_name}</Descriptions.Item>
-          <Descriptions.Item label="文件大小">{sample.file_size} bytes</Descriptions.Item>
-          <Descriptions.Item label="文件哈希">{sample.file_hash}</Descriptions.Item>
-          <Descriptions.Item label="分析结果">
-            {sample.classification_result}
+    <div className="sample-detail-page" style={{ padding: '24px' }}>
+      <div className="page-header">
+        <Title level={3}>{sample.file_name}</Title>
+        <Tag color={sample.is_malicious === 1 ? 'error' : 'success'} style={{ fontSize: '14px', padding: '4px 8px' }}>
+          {sample.is_malicious === 1 
+            ? <><WarningOutlined /> 恶意软件</>
+            : <><CheckCircleOutlined /> 正常软件</>}
+        </Tag>
+      </div>
+
+      <Card style={{ marginTop: '16px' }}>
+        <Descriptions title="基本信息" bordered>
+          <Descriptions.Item label="样本ID">{sample.id}</Descriptions.Item>
+          <Descriptions.Item label="文件名">{sample.file_name}</Descriptions.Item>
+          <Descriptions.Item label="文件大小">{(sample.file_size / 1024).toFixed(2)} KB</Descriptions.Item>
+          <Descriptions.Item label="MD5哈希" span={3}>{sample.file_hash}</Descriptions.Item>
+          <Descriptions.Item label="分析时间">{sample.analysis_time}</Descriptions.Item>
+          <Descriptions.Item label="分类结果" span={2}>
+            <Tag color={sample.is_malicious === 1 ? 'error' : 'success'}>
+              {sample.classification_result}
+            </Tag>
           </Descriptions.Item>
         </Descriptions>
       </Card>
 
-      <Row gutter={16} style={{ marginTop: 16 }}>
-        <Col span={12}>
-          <Card title="节区特征分析">
-            <ReactECharts option={sectionChartOption} style={{ height: 400 }} />
-          </Card>
-        </Col>
-        <Col span={12}>
-          <Card title="节区权重分析">
-            <ReactECharts option={sectionWeightChartOption} style={{ height: 400 }} />
-          </Card>
-        </Col>
-      </Row>
+      <Tabs defaultActiveKey="1" style={{ marginTop: '24px' }}>
+        <TabPane 
+          tab={<span><FileTextOutlined />直方图特征</span>}
+          key="1"
+        >
+          {sample.histogram_features ? (
+            <div>
+              <Paragraph>
+                直方图特征是基于文件字节统计分析的特征，包括字节分布直方图和字节熵直方图。
+                这类特征可以有效检测加密/填充数据，识别代码段和混淆区域。
+              </Paragraph>
+              
+              <Divider orientation="left">特征图表</Divider>
+              
+              <Row gutter={[16, 16]}>
+                <Col span={24}>
+                  <ByteHistogramChart 
+                    byteHistogram={sample.histogram_features.byte_histogram} 
+                  />
+                </Col>
+                <Col span={24}>
+                  <EntropyHistogramChart 
+                    entropyHistogram={sample.histogram_features.entropy_histogram} 
+                  />
+                </Col>
+              </Row>
+            </div>
+          ) : (
+            <Result
+              status="warning"
+              title="暂无直方图特征数据"
+              subTitle="未能提取该样本的直方图特征"
+            />
+          )}
+        </TabPane>
 
-      <Card title="字符串匹配特征分析" style={{ marginTop: 16 }}>
-        <ReactECharts option={stringMatchChartOption} style={{ height: 400 }} />
-      </Card>
+        <TabPane 
+          tab={<span><FileTextOutlined />PE静态特征</span>}
+          key="2"
+        >
+          {sample.pe_features ? (
+            <div>
+              <Paragraph>
+                PE静态特征是从PE文件结构中提取的特征，包括文件头信息、节区属性、导入导出表等。
+                这类特征可以有效识别异常PE结构，检测壳和代码注入等恶意行为。
+              </Paragraph>
+              
+              <PEFeaturesCard 
+                generalInfo={sample.pe_features.general_info}
+                headerInfo={sample.pe_features.header_info}
+                sectionInfo={sample.pe_features.section_info}
+                exportsInfo={sample.pe_features.exports_info}
+              />
+            </div>
+          ) : (
+            <Result
+              status="warning"
+              title="暂无PE静态特征数据"
+              subTitle="未能提取该样本的PE静态特征"
+            />
+          )}
+        </TabPane>
 
-      <Card title="详细特征数据" style={{ marginTop: 16 }}>
-        <Descriptions title="节区特征" column={3}>
-          <Descriptions.Item label="入口节区">{sample.engineered_features.section_features.entry}</Descriptions.Item>
-          <Descriptions.Item label="节区数量">{sample.engineered_features.section_features.section_num}</Descriptions.Item>
-          <Descriptions.Item label="资源节区数量">{sample.engineered_features.section_features.rsrc_num}</Descriptions.Item>
-          <Descriptions.Item label="可读节区大小">{sample.engineered_features.section_features.size_R}</Descriptions.Item>
-          <Descriptions.Item label="可写节区大小">{sample.engineered_features.section_features.size_W}</Descriptions.Item>
-          <Descriptions.Item label="可执行节区大小">{sample.engineered_features.section_features.size_X}</Descriptions.Item>
-          <Descriptions.Item label="可读节区熵值">{sample.engineered_features.section_features.entr_R}</Descriptions.Item>
-          <Descriptions.Item label="可写节区熵值">{sample.engineered_features.section_features.entr_W}</Descriptions.Item>
-          <Descriptions.Item label="可执行节区熵值">{sample.engineered_features.section_features.entr_X}</Descriptions.Item>
-        </Descriptions>
+        <TabPane 
+          tab={<span><FileTextOutlined />LIEF分析</span>}
+          key="4"
+        >
+          {sample.lief_features ? (
+            <div>
+              <Paragraph>
+                LIEF分析提供了PE文件的深度结构分析，包括文件头信息、节区属性、导入导出表、TLS和数字签名等信息。
+                这些信息对于理解PE文件的行为和识别潜在的恶意特征非常重要。
+              </Paragraph>
+              
+              <LiefAnalysisCard liefData={sample.lief_features} />
+            </div>
+          ) : (
+            <Result
+              status="warning"
+              title="暂无LIEF分析数据"
+              subTitle="未能获取该样本的LIEF分析结果"
+            />
+          )}
+        </TabPane>
 
-        <Descriptions title="字符串匹配特征" column={3} style={{ marginTop: 16 }}>
-          <Descriptions.Item label="MZ标记数量">{sample.engineered_features.string_match.mz_count}</Descriptions.Item>
-          <Descriptions.Item label="MZ平均长度">{sample.engineered_features.string_match.mz_mean}</Descriptions.Item>
-          <Descriptions.Item label="PE标记数量">{sample.engineered_features.string_match.pe_count}</Descriptions.Item>
-          <Descriptions.Item label="PE平均长度">{sample.engineered_features.string_match.pe_mean}</Descriptions.Item>
-          <Descriptions.Item label="矿池关键词数量">{sample.engineered_features.string_match.pool_count}</Descriptions.Item>
-          <Descriptions.Item label="矿池平均长度">{sample.engineered_features.string_match.pool_mean}</Descriptions.Item>
-          <Descriptions.Item label="CPU关键词数量">{sample.engineered_features.string_match.cpu_count}</Descriptions.Item>
-          <Descriptions.Item label="CPU平均长度">{sample.engineered_features.string_match.cpu_mean}</Descriptions.Item>
-          <Descriptions.Item label="GPU关键词数量">{sample.engineered_features.string_match.gpu_count}</Descriptions.Item>
-          <Descriptions.Item label="GPU平均长度">{sample.engineered_features.string_match.gpu_mean}</Descriptions.Item>
-          <Descriptions.Item label="数字货币关键词数量">{sample.engineered_features.string_match.coin_count}</Descriptions.Item>
-          <Descriptions.Item label="数字货币平均长度">{sample.engineered_features.string_match.coin_mean}</Descriptions.Item>
-        </Descriptions>
-      </Card>
-    </PageContainer>
+        <TabPane 
+          tab={<span><FileTextOutlined />特征工程</span>}
+          key="3"
+        >
+          {sample.engineered_features ? (
+            <div>
+              <Paragraph>
+                特征工程是基于专家领域知识提取的高级特征，包括节区信息、字符串匹配、Yara规则匹配、关键字扫描和操作码分析等。
+                这类特征可以有效检测挖矿软件、加壳程序和其他高级恶意行为。
+              </Paragraph>
+              
+              <FeatureEngineeringCard 
+                sectionFeatures={sample.engineered_features.section_features}
+                stringMatch={sample.engineered_features.string_match}
+                yaraMatch={sample.engineered_features.yara_match}
+                stringCount={sample.engineered_features.string_count}
+                opcodeFeatures={sample.engineered_features.opcode_features}
+              />
+            </div>
+          ) : (
+            <Result
+              status="warning"
+              title="暂无特征工程数据"
+              subTitle="未能提取该样本的特征工程数据"
+            />
+          )}
+        </TabPane>
+
+      </Tabs>
+    </div>
   );
 };
 
-export default SampleDetail; 
+export default SampleDetailPage; 

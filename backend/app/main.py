@@ -6,6 +6,7 @@ from .database import (
     insert_engineered_features
 )
 from .feature_extract.raw_features import ByteHistogram, ByteEntropyHistogram
+from .feature_extract.lief_features import LiefFeatureExtractor
 import os
 import hashlib
 from typing import List, Dict, Any

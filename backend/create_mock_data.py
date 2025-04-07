@@ -1,9 +1,10 @@
 import os
 import random
 import hashlib
+from app.mock.lief_mock import generate_mock_lief_data
 from app.database import (
-    init_db, insert_sample, insert_histogram_features, 
-    insert_pe_features, insert_engineered_features
+    init_db, insert_lief_features, insert_sample, insert_histogram_features, 
+    insert_pe_features, insert_engineered_features, insert_lief_features
 )
 
 # 初始化数据库
@@ -195,6 +196,20 @@ def generate_mock_sample(index):
     insert_engineered_features(
         sample_id, section_features, string_match,
         yara_match, string_count, opcode_features
+    )
+
+
+    lief_data = generate_mock_lief_data(is_malicious)
+    dos_header = lief_data['dos_header']
+    pe_header = lief_data['header']
+    sections = lief_data['sections']
+    imports = lief_data['imports']
+    tls_info =lief_data.get('tls', {})
+    resources = lief_data.get('resources', [])
+
+    insert_lief_features(
+        sample_id, dos_header, pe_header,
+        sections, imports, tls_info, resources
     )
     
     return sample_id
