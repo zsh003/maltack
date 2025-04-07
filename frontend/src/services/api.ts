@@ -1,8 +1,9 @@
 import axios from 'axios';
 
 const api = axios.create({
-  baseURL: '/api',
+  baseURL: process.env.NODE_ENV === 'development' ? 'http://localhost:5000/api' : '/api',
   timeout: 60000,
+  withCredentials: true
 });
 
 export async function fetchSamples() {

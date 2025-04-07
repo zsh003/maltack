@@ -5,3 +5,14 @@ __pycache__/
 *.pyc
 *.pyo
 *.pyd
+*.db
+.ipynb_checkpoints/
+
+dataset/
+feature_engineering/
+histogram/
+models/
+oof/
+pe_raw/
+tmp/
+miner_demo/

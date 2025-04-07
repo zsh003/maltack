@@ -183,5 +183,7 @@ def api_stats():
         'total_samples': total_count,
         'malicious_samples': malicious_count,
         'benign_samples': benign_count,
-        'detection_rate': round(malicious_count / total_count * 100, 2) if total_count else 0
+        'detection_rate': round(malicious_count / total_count * 100, 2) if total_count else 0,
+        'Access-Control-Allow-Origin': 'http://localhost:8000',
+        'Access-Control-Allow-Credentials': 'true'
     }) 
