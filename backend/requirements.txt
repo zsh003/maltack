@@ -9,3 +9,4 @@ passlib==1.7.4
 bcrypt==4.3.0
 numpy==2.2.4
 pandas==2.2.3
+lief==0.16.4

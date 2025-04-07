@@ -20,6 +20,7 @@ package-lock.json
 .umi-test
 
 backend/uploads/
+backend/test/
 
 machine_learning/dataset/
 machine_learning/feature_engineering/

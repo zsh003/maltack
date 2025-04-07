@@ -10,10 +10,8 @@ def init_db():
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
     
-    # 删除旧的engineered_features表
-    # cursor.execute('DROP TABLE IF EXISTS engineered_features')
-    
     # 样本基本信息表
+    cursor.execute('DROP TABLE IF EXISTS samples')
     cursor.execute('''
     CREATE TABLE IF NOT EXISTS samples (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -27,6 +25,7 @@ def init_db():
     ''')
     
     # 直方图特征表
+    cursor.execute('DROP TABLE IF EXISTS histogram_features')
     cursor.execute('''
     CREATE TABLE IF NOT EXISTS histogram_features (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -38,6 +37,7 @@ def init_db():
     ''')
     
     # PE静态特征表
+    cursor.execute('DROP TABLE IF EXISTS pe_features')
     cursor.execute('''
     CREATE TABLE IF NOT EXISTS pe_features (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -50,7 +50,8 @@ def init_db():
     )
     ''')
     
-    # 特征工程表（更新后的结构）
+    # 特征工程表
+    cursor.execute('DROP TABLE IF EXISTS engineered_features')
     cursor.execute('''
     CREATE TABLE IF NOT EXISTS engineered_features (
         id INTEGER PRIMARY KEY AUTOINCREMENT,

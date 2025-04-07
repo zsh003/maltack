@@ -5,11 +5,12 @@ from .database import (
     insert_sample, insert_histogram_features, insert_pe_features,
     insert_engineered_features
 )
-#from .feature_extractor import extract_features
+from .feature_extract.raw_features import ByteHistogram, ByteEntropyHistogram
 import os
 import hashlib
 from typing import List, Dict, Any
 import random
+import numpy as np
 
 app = FastAPI(title="恶意PE软件特征检测与识别系统")
 
@@ -61,6 +62,7 @@ async def upload_sample(file: UploadFile = File(...)):
         # 异步读取，保存文件
         file_content = await file.read()
 
+        print(f'file_name: {file.filename}')
          # 计算文件哈希
         file_hash = hashlib.md5(file_content).hexdigest() 
         
@@ -84,11 +86,16 @@ async def upload_sample(file: UploadFile = File(...)):
             is_malicious=is_malicious,
             classification_result=classification_result
         )
+        print(f'sample_id: {sample_id}')
         
-        # 模拟提取特征并插入数据库
+        # 提取特征并插入数据库
         # 1. 直方图特征
-        byte_histogram = [random.randint(0, 10000) for _ in range(256)]
-        entropy_histogram = [random.randint(0, 10000) for _ in range(256)]
+        #byte_histogram = [random.randint(0, 10000) for _ in range(256)]
+        #entropy_histogram = [random.randint(0, 10000) for _ in range(256)]
+        byte_histogram = list(ByteHistogram().raw_features(file_content, None))
+        entropy_histogram = list(ByteEntropyHistogram().raw_features(file_content, None))
+        print(byte_histogram)
+        print(entropy_histogram)
         insert_histogram_features(sample_id, byte_histogram, entropy_histogram)
         
         # 2. PE静态特征
