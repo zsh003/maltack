@@ -1,6 +1,6 @@
 .idea/
 .venv/
-node_moddules/
+node_modules/
 __pycache__/
 *.pyc
 *.pyo
@@ -8,11 +8,11 @@ __pycache__/
 *.db
 .ipynb_checkpoints/
 
-dataset/
-feature_engineering/
-histogram/
-models/
-oof/
-pe_raw/
-tmp/
-miner_demo/
+machine_learning/dataset/
+machine_learning/feature_engineering/
+machine_learning/histogram/
+machine_learning/models/
+machine_learning/oof/
+machine_learning/pe_raw/
+machine_learning/tmp/
+machine_learning/miner_demo/
