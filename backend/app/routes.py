@@ -151,13 +151,32 @@ def api_upload_sample():
     }
     
     string_match = {
-        "btc_count": random.randint(0, 5),
-        "ltc_count": random.randint(0, 5),
-        "xmr_count": random.randint(0, 5),
+        "mz_count": random.randint(0, 10),
+        "mz_mean": round(random.uniform(0, 30), 1),
+        "pe_count": random.randint(0, 10),
+        "pe_mean": round(random.uniform(0, 30), 1),
+        "pool_count": random.randint(0, 10),
+        "pool_mean": round(random.uniform(0, 30), 1),
+        "cpu_count": random.randint(0, 10),
+        "cpu_mean": round(random.uniform(0, 30), 1),
+        "gpu_count": random.randint(0, 10),
+        "gpu_mean": round(random.uniform(0, 30), 1),
+        "coin_count": random.randint(0, 10),
+        "coin_mean": round(random.uniform(0, 30), 1),
+        "btc_count": random.randint(0, 10),
+        "btc_mean": round(random.uniform(0, 30), 1),
+        "ltc_count": random.randint(0, 10),
+        "ltc_mean": round(random.uniform(0, 30), 1),
+        "xmr_count": random.randint(0, 10),
+        "xmr_mean": round(random.uniform(0, 30), 1),
         "paths_count": random.randint(0, 10),
+        "paths_mean": round(random.uniform(0, 30), 1),
         "regs_count": random.randint(0, 10),
+        "regs_mean": round(random.uniform(0, 30), 1),
         "urls_count": random.randint(0, 10),
-        "ips_count": random.randint(0, 10)
+        "urls_mean": round(random.uniform(0, 30), 1),
+        "ips_count": random.randint(0, 10),
+        "ips_mean": round(random.uniform(0, 30), 1)
     }
     
     yara_match = {

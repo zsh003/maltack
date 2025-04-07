@@ -356,10 +356,20 @@ const FeatureEngineeringCard: React.FC<FeatureEngineeringCardProps> = ({
             </Col>
           </Row>
 
-
-          <Card title="字符串匹配特征分析" style={{ marginTop: 16 }}>
-            <ReactECharts option={stringMatchChartOption} style={{ height: 400 }} />
-          </Card>
+          <Descriptions title="字符串匹配特征" column={3} style={{ marginTop: 16 }}>
+            <Descriptions.Item label="MZ标记数量">{stringMatch.mz_count}</Descriptions.Item>
+            <Descriptions.Item label="MZ平均长度">{stringMatch.mz_mean}</Descriptions.Item>
+            <Descriptions.Item label="PE标记数量">{stringMatch.pe_count}</Descriptions.Item>
+            <Descriptions.Item label="PE平均长度">{stringMatch.pe_mean}</Descriptions.Item>
+            <Descriptions.Item label="矿池关键词数量">{stringMatch.pool_count}</Descriptions.Item>
+            <Descriptions.Item label="矿池平均长度">{stringMatch.pool_mean}</Descriptions.Item>
+            <Descriptions.Item label="CPU关键词数量">{stringMatch.cpu_count}</Descriptions.Item>
+            <Descriptions.Item label="CPU平均长度">{stringMatch.cpu_mean}</Descriptions.Item>
+            <Descriptions.Item label="GPU关键词数量">{stringMatch.gpu_count}</Descriptions.Item>
+            <Descriptions.Item label="GPU平均长度">{stringMatch.gpu_mean}</Descriptions.Item>
+            <Descriptions.Item label="数字货币关键词数量">{stringMatch.coin_count}</Descriptions.Item>
+            <Descriptions.Item label="数字货币平均长度">{stringMatch.coin_mean}</Descriptions.Item>
+          </Descriptions>
 
         </Panel>
         
@@ -413,22 +423,10 @@ const FeatureEngineeringCard: React.FC<FeatureEngineeringCardProps> = ({
                 valueStyle={{ color: stringCount.algorithm_name_count > 2 ? '#cf1322' : '#3f8600' }}
               />
             </Col>
-
-            <Descriptions title="字符串匹配特征" column={3} style={{ marginTop: 16 }}>
-              <Descriptions.Item label="MZ标记数量">{stringMatch.mz_count}</Descriptions.Item>
-              <Descriptions.Item label="MZ平均长度">{stringMatch.mz_mean}</Descriptions.Item>
-              <Descriptions.Item label="PE标记数量">{stringMatch.pe_count}</Descriptions.Item>
-              <Descriptions.Item label="PE平均长度">{stringMatch.pe_mean}</Descriptions.Item>
-              <Descriptions.Item label="矿池关键词数量">{stringMatch.pool_count}</Descriptions.Item>
-              <Descriptions.Item label="矿池平均长度">{stringMatch.pool_mean}</Descriptions.Item>
-              <Descriptions.Item label="CPU关键词数量">{stringMatch.cpu_count}</Descriptions.Item>
-              <Descriptions.Item label="CPU平均长度">{stringMatch.cpu_mean}</Descriptions.Item>
-              <Descriptions.Item label="GPU关键词数量">{stringMatch.gpu_count}</Descriptions.Item>
-              <Descriptions.Item label="GPU平均长度">{stringMatch.gpu_mean}</Descriptions.Item>
-              <Descriptions.Item label="数字货币关键词数量">{stringMatch.coin_count}</Descriptions.Item>
-              <Descriptions.Item label="数字货币平均长度">{stringMatch.coin_mean}</Descriptions.Item>
-            </Descriptions>
           </Row>
+          <Card title="字符串匹配特征分析" style={{ marginTop: 16 }}>
+            <ReactECharts option={stringMatchChartOption} style={{ height: 400 }} />
+          </Card>
         </Panel>
         
         <Panel header="操作码分析详情" key="5">

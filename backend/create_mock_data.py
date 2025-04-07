@@ -128,15 +128,15 @@ def generate_mock_sample(index):
         "entr_R": entr_R,
         "entr_W": entr_W,
         "entr_X": entr_X,
-        "rsrc_num": random.randint(0, 3),
-        "section_num": random.randint(3, 10),
-        "file_size": file_size,
         "size_R_weight": size_R_weight,
         "size_W_weight": size_W_weight,
         "size_X_weight": size_X_weight,
         "entr_R_weight": entr_R_weight,
         "entr_W_weight": entr_W_weight,
-        "entr_X_weight": entr_X_weight
+        "entr_X_weight": entr_X_weight,
+        "rsrc_num": random.randint(0, 3),
+        "section_num": random.randint(3, 10),
+        "file_size": file_size
     }
     
     # 恶意软件更有可能包含可疑字符串
@@ -153,7 +153,6 @@ def generate_mock_sample(index):
         "gpu_mean": round(random.uniform(2, 4), 2) if is_malicious else 0,
         "coin_count": random.randint(0, 10) if is_malicious else 0,
         "coin_mean": round(random.uniform(2, 4), 2) if is_malicious else 0,
-        # 其他原有的字符串特征
         "btc_count": random.randint(0, 5) if is_malicious else random.randint(0, 2),
         "btc_mean": round(random.uniform(20, 30), 2),
         "ltc_count": random.randint(0, 5) if is_malicious else 0,
