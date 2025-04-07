@@ -98,29 +98,76 @@ def generate_mock_sample(index):
     insert_pe_features(sample_id, general_info, header_info, section_info, exports_info)
     
     # 生成特征工程特征
+    # 计算节区大小总和用于权重计算
+    total_size = random.randint(50000, 1500000)
+    size_R = random.randint(10000, 500000)
+    size_W = random.randint(10000, 500000)
+    size_X = random.randint(10000, 500000)
+    
+    # 计算权重
+    size_R_weight = round(size_R / total_size, 4)
+    size_W_weight = round(size_W / total_size, 4)
+    size_X_weight = round(size_X / total_size, 4)
+    
+    # 生成熵值
+    entr_R = round(random.uniform(5.0, 7.0), 2)
+    entr_W = round(random.uniform(2.0, 5.0), 2)
+    entr_X = round(random.uniform(6.0, 8.0), 2)
+    
+    # 计算熵值权重
+    total_entropy = entr_R + entr_W + entr_X
+    entr_R_weight = round(entr_R / total_entropy, 8)
+    entr_W_weight = round(entr_W / total_entropy, 8)
+    entr_X_weight = round(entr_X / total_entropy, 8)
+    
     section_features = {
         "entry": random.randint(0, 10),
-        "size_R": random.randint(10000, 500000),
-        "size_W": random.randint(10000, 500000),
-        "size_X": random.randint(10000, 500000),
-        "entr_R": round(random.uniform(5.0, 7.0), 2),
-        "entr_W": round(random.uniform(2.0, 5.0), 2),
-        "entr_X": round(random.uniform(6.0, 8.0), 2),
+        "size_R": size_R,
+        "size_W": size_W,
+        "size_X": size_X,
+        "entr_R": entr_R,
+        "entr_W": entr_W,
+        "entr_X": entr_X,
         "rsrc_num": random.randint(0, 3),
-        "section_num": len(section_info["sections"]),
-        "file_size": file_size
+        "section_num": random.randint(3, 10),
+        "file_size": file_size,
+        "size_R_weight": size_R_weight,
+        "size_W_weight": size_W_weight,
+        "size_X_weight": size_X_weight,
+        "entr_R_weight": entr_R_weight,
+        "entr_W_weight": entr_W_weight,
+        "entr_X_weight": entr_X_weight
     }
     
     # 恶意软件更有可能包含可疑字符串
-    btc_count = random.randint(0, 5) if is_malicious else random.randint(0, 2)
     string_match = {
-        "btc_count": btc_count,
-        "ltc_count": random.randint(0, btc_count),
+        "mz_count": random.randint(5, 15),
+        "mz_mean": round(random.uniform(2, 3), 2),
+        "pe_count": random.randint(10, 20),
+        "pe_mean": round(random.uniform(2, 3), 2),
+        "pool_count": random.randint(5, 10) if is_malicious else random.randint(0, 3),
+        "pool_mean": round(random.uniform(3, 5), 2),
+        "cpu_count": random.randint(5, 15) if is_malicious else random.randint(0, 5),
+        "cpu_mean": round(random.uniform(2, 4), 2),
+        "gpu_count": random.randint(0, 5) if is_malicious else 0,
+        "gpu_mean": round(random.uniform(2, 4), 2) if is_malicious else 0,
+        "coin_count": random.randint(0, 10) if is_malicious else 0,
+        "coin_mean": round(random.uniform(2, 4), 2) if is_malicious else 0,
+        # 其他原有的字符串特征
+        "btc_count": random.randint(0, 5) if is_malicious else random.randint(0, 2),
+        "btc_mean": round(random.uniform(20, 30), 2),
+        "ltc_count": random.randint(0, 5) if is_malicious else 0,
+        "ltc_mean": round(random.uniform(20, 30), 2),
         "xmr_count": random.randint(0, 5) if is_malicious else 0,
+        "xmr_mean": round(random.uniform(20, 30), 2),
         "paths_count": random.randint(3, 20),
+        "paths_mean": round(random.uniform(3, 5), 2),
         "regs_count": random.randint(0, 20) if is_malicious else random.randint(0, 5),
+        "regs_mean": round(random.uniform(2, 4), 2),
         "urls_count": random.randint(2, 20) if is_malicious else random.randint(0, 5),
-        "ips_count": random.randint(0, 10) if is_malicious else random.randint(0, 3)
+        "urls_mean": round(random.uniform(3, 6), 2),
+        "ips_count": random.randint(0, 10) if is_malicious else random.randint(0, 3),
+        "ips_mean": round(random.uniform(6, 8), 2)
     }
     
     yara_match = {

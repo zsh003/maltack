@@ -10,6 +10,9 @@ def init_db():
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
     
+    # 删除旧的engineered_features表
+    # cursor.execute('DROP TABLE IF EXISTS engineered_features')
+    
     # 样本基本信息表
     cursor.execute('''
     CREATE TABLE IF NOT EXISTS samples (
@@ -47,7 +50,7 @@ def init_db():
     )
     ''')
     
-    # 特征工程表
+    # 特征工程表（更新后的结构）
     cursor.execute('''
     CREATE TABLE IF NOT EXISTS engineered_features (
         id INTEGER PRIMARY KEY AUTOINCREMENT,

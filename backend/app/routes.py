@@ -28,6 +28,23 @@ def api_sample_detail(sample_id):
         return jsonify({'error': 'Sample not found'}), 404
     return jsonify(sample)
 
+@app.route('/api/stats', methods=['GET'])
+def api_stats():
+    """获取统计信息"""
+    samples = get_all_samples()
+    total_count = len(samples)
+    malicious_count = sum(1 for s in samples if s['is_malicious'] == 1)
+    benign_count = total_count - malicious_count
+    
+    return jsonify({
+        'total_samples': total_count,
+        'malicious_samples': malicious_count,
+        'benign_samples': benign_count,
+        'detection_rate': round(malicious_count / total_count * 100, 2) if total_count else 0,
+        'Access-Control-Allow-Origin': 'http://localhost:8000',
+        'Access-Control-Allow-Credentials': 'true'
+    }) 
+    
 @app.route('/api/samples/upload', methods=['POST'])
 def api_upload_sample():
     """上传样本文件进行分析"""
@@ -122,6 +139,12 @@ def api_upload_sample():
         "entr_R": round(random.uniform(5.0, 7.0), 2),
         "entr_W": round(random.uniform(2.0, 5.0), 2),
         "entr_X": round(random.uniform(6.0, 8.0), 2),
+        "size_R_weight": random.randint(0, 100),
+        "size_W_weight": random.randint(0, 100),
+        "size_X_weight": random.randint(0, 100),
+        "entr_R_weight": random.randint(0, 100),
+        "entr_W_weight": random.randint(0, 100),
+        "entr_X_weight": random.randint(0, 100),
         "rsrc_num": random.randint(0, 3),
         "section_num": random.randint(3, 10),
         "file_size": file_size
@@ -171,19 +194,3 @@ def api_upload_sample():
         'message': '已成功上传并分析样本'
     })
 
-@app.route('/api/stats', methods=['GET'])
-def api_stats():
-    """获取统计信息"""
-    samples = get_all_samples()
-    total_count = len(samples)
-    malicious_count = sum(1 for s in samples if s['is_malicious'] == 1)
-    benign_count = total_count - malicious_count
-    
-    return jsonify({
-        'total_samples': total_count,
-        'malicious_samples': malicious_count,
-        'benign_samples': benign_count,
-        'detection_rate': round(malicious_count / total_count * 100, 2) if total_count else 0,
-        'Access-Control-Allow-Origin': 'http://localhost:8000',
-        'Access-Control-Allow-Credentials': 'true'
-    }) 

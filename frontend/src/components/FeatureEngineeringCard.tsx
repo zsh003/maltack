@@ -83,6 +83,168 @@ const FeatureEngineeringCard: React.FC<FeatureEngineeringCardProps> = ({
     }]
   };
 
+  // 节区特征图表配置
+  const sectionChartOption = {
+    title: {
+      text: '节区特征分布',
+      left: 'center'
+    },
+    tooltip: {
+      trigger: 'axis',
+      axisPointer: {
+        type: 'shadow'
+      }
+    },
+    legend: {
+      data: ['大小', '熵值'],
+      top: 30
+    },
+    grid: {
+      left: '3%',
+      right: '4%',
+      bottom: '3%',
+      containLabel: true
+    },
+    xAxis: {
+      type: 'category',
+      data: ['可读', '可写', '可执行']
+    },
+    yAxis: [
+      {
+        type: 'value',
+        name: '大小',
+        position: 'left'
+      },
+      {
+        type: 'value',
+        name: '熵值',
+        position: 'right'
+      }
+    ],
+    series: [
+      {
+        name: '大小',
+        type: 'bar',
+        data: [
+          sectionFeatures.size_R,
+          sectionFeatures.size_W,
+          sectionFeatures.size_X
+        ]
+      },
+      {
+        name: '熵值',
+        type: 'line',
+        yAxisIndex: 1,
+        data: [
+          sectionFeatures.entr_R,
+          sectionFeatures.entr_W,
+          sectionFeatures.entr_X
+        ]
+      }
+    ]
+  };
+
+  // 节区权重图表配置
+  const sectionWeightChartOption = {
+    title: {
+      text: '节区权重分布',
+      left: 'center'
+    },
+    tooltip: {
+      trigger: 'item'
+    },
+    legend: {
+      orient: 'vertical',
+      left: 'left'
+    },
+    series: [
+      {
+        name: '节区权重',
+        type: 'pie',
+        radius: '50%',
+        data: [
+          { value: sectionFeatures.size_R_weight, name: '可读权重' },
+          { value: sectionFeatures.size_W_weight, name: '可写权重' },
+          { value: sectionFeatures.size_X_weight, name: '可执行权重' }
+        ],
+        emphasis: {
+          itemStyle: {
+            shadowBlur: 10,
+            shadowOffsetX: 0,
+            shadowColor: 'rgba(0, 0, 0, 0.5)'
+          }
+        }
+      }
+    ]
+  };
+
+  // 字符串匹配特征图表配置
+  const stringMatchChartOption = {
+    title: {
+      text: '字符串匹配特征',
+      left: 'center'
+    },
+    tooltip: {
+      trigger: 'axis',
+      axisPointer: {
+        type: 'shadow'
+      }
+    },
+    legend: {
+      data: ['数量', '平均长度'],
+      top: 30
+    },
+    grid: {
+      left: '3%',
+      right: '4%',
+      bottom: '3%',
+      containLabel: true
+    },
+    xAxis: {
+      type: 'category',
+      data: ['MZ', 'PE', '矿池', 'CPU', 'GPU', '数字货币']
+    },
+    yAxis: [
+      {
+        type: 'value',
+        name: '数量',
+        position: 'left'
+      },
+      {
+        type: 'value',
+        name: '平均长度',
+        position: 'right'
+      }
+    ],
+    series: [
+      {
+        name: '数量',
+        type: 'bar',
+        data: [
+          stringMatch.mz_count,
+          stringMatch.pe_count,
+          stringMatch.pool_count,
+          stringMatch.cpu_count,
+          stringMatch.gpu_count,
+          stringMatch.coin_count
+        ]
+      },
+      {
+        name: '平均长度',
+        type: 'line',
+        yAxisIndex: 1,
+        data: [
+          stringMatch.mz_mean,
+          stringMatch.pe_mean,
+          stringMatch.pool_mean,
+          stringMatch.cpu_mean,
+          stringMatch.gpu_mean,
+          stringMatch.coin_mean
+        ]
+      }
+    ]
+  };
+
   return (
     <Card title="特征工程分析" className="feature-engineering-card">
       <Row gutter={[16, 16]}>
@@ -142,7 +304,7 @@ const FeatureEngineeringCard: React.FC<FeatureEngineeringCardProps> = ({
           </Card>
         </Col>
       </Row>
-      
+
       <Collapse ghost style={{ marginTop: 16 }}>
         <Panel header="节区特征详情" key="1">
           <Descriptions bordered size="small" column={3}>
@@ -156,6 +318,19 @@ const FeatureEngineeringCard: React.FC<FeatureEngineeringCardProps> = ({
             <Descriptions.Item label="资源节区数量">{sectionFeatures.rsrc_num}</Descriptions.Item>
             <Descriptions.Item label="节区总数">{sectionFeatures.section_num}</Descriptions.Item>
           </Descriptions>
+
+          <Row gutter={16} style={{ marginTop: 16 }}>
+            <Col span={12}>
+              <Card title="节区特征分析">
+                <ReactECharts option={sectionChartOption} style={{ height: 400 }} />
+              </Card>
+            </Col>
+            <Col span={12}>
+              <Card title="节区权重分析">
+                <ReactECharts option={sectionWeightChartOption} style={{ height: 400 }} />
+              </Card>
+            </Col>
+          </Row>
         </Panel>
         
         <Panel header="字符串匹配详情" key="2">
@@ -180,6 +355,12 @@ const FeatureEngineeringCard: React.FC<FeatureEngineeringCardProps> = ({
               </Card>
             </Col>
           </Row>
+
+
+          <Card title="字符串匹配特征分析" style={{ marginTop: 16 }}>
+            <ReactECharts option={stringMatchChartOption} style={{ height: 400 }} />
+          </Card>
+
         </Panel>
         
         <Panel header="YARA规则匹配详情" key="3">
@@ -232,6 +413,21 @@ const FeatureEngineeringCard: React.FC<FeatureEngineeringCardProps> = ({
                 valueStyle={{ color: stringCount.algorithm_name_count > 2 ? '#cf1322' : '#3f8600' }}
               />
             </Col>
+
+            <Descriptions title="字符串匹配特征" column={3} style={{ marginTop: 16 }}>
+              <Descriptions.Item label="MZ标记数量">{stringMatch.mz_count}</Descriptions.Item>
+              <Descriptions.Item label="MZ平均长度">{stringMatch.mz_mean}</Descriptions.Item>
+              <Descriptions.Item label="PE标记数量">{stringMatch.pe_count}</Descriptions.Item>
+              <Descriptions.Item label="PE平均长度">{stringMatch.pe_mean}</Descriptions.Item>
+              <Descriptions.Item label="矿池关键词数量">{stringMatch.pool_count}</Descriptions.Item>
+              <Descriptions.Item label="矿池平均长度">{stringMatch.pool_mean}</Descriptions.Item>
+              <Descriptions.Item label="CPU关键词数量">{stringMatch.cpu_count}</Descriptions.Item>
+              <Descriptions.Item label="CPU平均长度">{stringMatch.cpu_mean}</Descriptions.Item>
+              <Descriptions.Item label="GPU关键词数量">{stringMatch.gpu_count}</Descriptions.Item>
+              <Descriptions.Item label="GPU平均长度">{stringMatch.gpu_mean}</Descriptions.Item>
+              <Descriptions.Item label="数字货币关键词数量">{stringMatch.coin_count}</Descriptions.Item>
+              <Descriptions.Item label="数字货币平均长度">{stringMatch.coin_mean}</Descriptions.Item>
+            </Descriptions>
           </Row>
         </Panel>
         

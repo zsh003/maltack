@@ -4,3 +4,4 @@ numpy
 pandas
 scikit-learn
 sqlite3-api==2.0.4
+pefile
