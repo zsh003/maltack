@@ -3,8 +3,9 @@ from fastapi.middleware.cors import CORSMiddleware
 from .database import (
     get_all_samples, get_sample_by_id,
     insert_sample, insert_histogram_features, insert_pe_features,
-    insert_engineered_features
+    insert_engineered_features, insert_lief_features
 )
+from app.mock.lief_mock import generate_mock_lief_data
 from .feature_extract.raw_features import ByteHistogram, ByteEntropyHistogram
 from .feature_extract.lief_features import LiefFeatureExtractor
 import os
@@ -222,6 +223,19 @@ async def upload_sample(file: UploadFile = File(...)):
         insert_engineered_features(
             sample_id, section_features, string_match,
             yara_match, string_count, opcode_features
+        )
+
+        lief_data = generate_mock_lief_data(is_malicious)
+        dos_header = lief_data['dos_header']
+        pe_header = lief_data['header']
+        sections = lief_data['sections']
+        imports = lief_data['imports']
+        tls_info =lief_data.get('tls', {})
+        resources = lief_data.get('resources', [])
+
+        insert_lief_features(
+            sample_id, dos_header, pe_header,
+            sections, imports, tls_info, resources
         )
         
         return {
