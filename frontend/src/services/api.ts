@@ -34,4 +34,8 @@ export async function fetchStats() {
   return response.data;
 }
 
+export async function getModelAnalysis() {
+  return api.get('/model/analysis');
+}
+
 export default api; 

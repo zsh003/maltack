@@ -13,6 +13,7 @@ import hashlib
 from typing import List, Dict, Any
 import random
 import numpy as np
+import pickle
 
 app = FastAPI(title="恶意PE软件特征检测与识别系统")
 
@@ -77,7 +78,7 @@ async def upload_sample(file: UploadFile = File(...)):
         file_size = len(file_content)
         
         # 模拟分类结果
-        is_malicious = random.choice([0, 1])
+        is_malicious = 1#random.choice([0, 1])
         classification_result = "恶意软件" if is_malicious else "正常软件"
         
         # 插入样本基本信息
@@ -245,3 +246,63 @@ async def upload_sample(file: UploadFile = File(...)):
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"文件处理失败: {str(e)}")
+
+@app.get("/api/model/analysis")
+async def get_model_analysis():
+    """获取模型分析数据"""
+    try:
+        # 读取模型训练历史
+        # with open("../machine_learning/models/histogram_history.pkl", "rb") as f:
+        #     histogram_history = pickle.load(f)
+        
+        # 读取PE静态特征模型性能
+        with open("../machine_learning/models/raw_feature_names.pkl", "rb") as f:
+            model_names = pickle.load(f)
+        
+        # 读取特征工程模型性能
+        # with open("../machine_learning/models/feature_importance.pkl", "rb") as f:
+        #     feature_importance = pickle.load(f)
+            
+        # 生成模拟数据（实际项目中应该从文件读取）
+        return {
+            "histogram_model": {
+                "metrics": {
+                    "accuracy": 92.5,
+                    "precision": 91.8,
+                    "recall": 93.2,
+                    "f1_score": 92.5,
+                    "confusion_matrix": [[450, 35], [40, 475]]
+                },
+                # "training_history": histogram_history
+            },
+            "pe_raw_models": [
+                {
+                    "model_name": name,
+                    "accuracy": random.uniform(85, 95),
+                    "importance": [
+                        {"feature": f"feature_{i}", "score": random.random()}
+                        for i in range(10)
+                    ]
+                }
+                for name in model_names
+            ],
+            "feature_engineering": {
+                "metrics": {
+                    "accuracy": 94.2,
+                    "precision": 93.8,
+                    "recall": 94.6,
+                    "f1_score": 94.2,
+                    "confusion_matrix": [[470, 25], [30, 475]]
+                },
+                # "feature_importance": feature_importance
+            },
+            "ensemble_metrics": {
+                "accuracy": 96.98,
+                "precision": 94.1,
+                "recall": 95.5,
+                "f1_score": 93.4,
+                "confusion_matrix": [[11707, 52], [18, 5890]]
+            }
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"获取模型分析数据失败: {str(e)}")
