@@ -35,6 +35,13 @@ experiment/
 - scikit-learn 0.23.1
 - 详细依赖见项目根目录requirements.txt
 
+### Linux中文字体安装
+
+```bash
+git clone https://github.com/tracyone/program_font && cd program_font && ./install.sh
+
+```
+
 ### 运行完整实验
 
 ```bash

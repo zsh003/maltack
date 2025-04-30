@@ -10,6 +10,9 @@ import pickle
 import sys
 import pandas as pd
 
+plt.rcParams['font.sans-serif'] = ['SimHei']  # 用来正常显示中文标签
+plt.rcParams['axes.unicode_minus'] = False  # 用来正常显示负号
+
 # 添加当前目录到系统路径
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
@@ -109,7 +112,17 @@ def train_basic_model(model, train_data, valid_data):
         callbacks=callbacks
     )
     
-    return model, history
+    # 将Keras的History对象转换为字典格式
+    converted_history = {
+        'train': [{
+            'loss': history.history['loss'][i],
+            'accuracy': history.history['accuracy'][i],
+            'val_loss': history.history['val_loss'][i],
+            'val_accuracy': history.history['val_accuracy'][i]
+        } for i in range(len(history.epoch))]
+    }
+    
+    return model, converted_history
 
 def plot_training_history(histories, model_names, save_path=None):
     """绘制多个模型的训练历史对比图"""
@@ -117,8 +130,11 @@ def plot_training_history(histories, model_names, save_path=None):
     
     # 绘制训练和验证损失
     for history, name in zip(histories, model_names):
-        ax1.plot(history.history['loss'], label=f'{name} 训练')
-        ax1.plot(history.history['val_loss'], label=f'{name} 验证')
+        # 提取训练历史数据
+        train_loss = [epoch['loss'] for epoch in history['train']]
+        val_loss = [epoch['val_loss'] for epoch in history['train']]
+        ax1.plot(train_loss, label=f'{name} 训练')
+        ax1.plot(val_loss, label=f'{name} 验证')
     
     ax1.set_title('模型损失对比')
     ax1.set_ylabel('损失')
@@ -128,8 +144,11 @@ def plot_training_history(histories, model_names, save_path=None):
     
     # 绘制训练和验证准确率
     for history, name in zip(histories, model_names):
-        ax2.plot(history.history['accuracy'], label=f'{name} 训练')
-        ax2.plot(history.history['val_accuracy'], label=f'{name} 验证')
+        train_acc = [epoch['accuracy'] for epoch in history['train']]
+        val_acc = [epoch['val_accuracy'] for epoch in history['train']]
+        
+        ax2.plot(train_acc, label=f'{name} 训练')
+        ax2.plot(val_acc, label=f'{name} 验证')
     
     ax2.set_title('模型准确率对比')
     ax2.set_ylabel('准确率')

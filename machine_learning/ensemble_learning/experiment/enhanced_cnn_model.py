@@ -108,7 +108,7 @@ def create_enhanced_model():
     attn_branch = squeeze_excite_block(pool_2)
     
     # 残差分支：添加跳跃连接
-    res_branch = layers.Add()([pool_1, layers.Conv2D(200, (1, 1), padding='same')(pool_1)])  # 调整通道数
+    res_branch = layers.Add()([pool_1, layers.Conv2D(60, (1, 1), padding='same')(pool_1)])  # 调整通道数
     res_branch = layers.Conv2D(200, (2, 2), padding='same', activation='relu')(res_branch)
     res_branch = layers.MaxPooling2D(pool_size=(2, 2))(res_branch)
     
@@ -236,7 +236,8 @@ def train_enhanced_model(model, train_data, valid_data, use_soft_labels=False, u
     # 对抗训练
     if use_adversarial:
         print("使用对抗训练...")
-        history = []
+        #history = []
+        history = {'train': []} 
         for epoch in range(EPOCH):
             # 常规训练
             h = model.fit(
@@ -246,12 +247,22 @@ def train_enhanced_model(model, train_data, valid_data, use_soft_labels=False, u
                 verbose=1,
                 callbacks=callbacks if epoch == 0 else None  # 只在第一个epoch时使用回调
             )
+
+            epoch_history = {
+                'loss': h.history['loss'][0],
+                'accuracy': h.history['accuracy'][0],
+                'val_loss': h.history['val_loss'][0],
+                'val_accuracy': h.history['val_accuracy'][0]
+            }
             
-            if 'history' not in locals():
-                history = h.history
-            else:
-                for k, v in h.history.items():
-                    history[k].extend(v)
+            # if 'history' not in locals():
+            #     history = h.history
+            # else:
+            #     for k, v in h.history.items():
+            #         history[k].extend(v)
+            
+            # 存储到训练历史
+            history['train'].append(epoch_history)
             
             # 提前终止检查
             if hasattr(model, 'stop_training') and model.stop_training:
@@ -271,6 +282,8 @@ def train_enhanced_model(model, train_data, valid_data, use_soft_labels=False, u
                 
                 # 训练对抗样本
                 model.train_on_batch(batch_x_adv, batch_y)
+        
+        return model, history
                 
     else:
         # 常规训练
@@ -282,7 +295,16 @@ def train_enhanced_model(model, train_data, valid_data, use_soft_labels=False, u
             callbacks=callbacks
         )
     
-    return model, history
+        converted_history = {
+            'train': [{
+                'loss': history.history['loss'][i],
+                'accuracy': history.history['accuracy'][i],
+                'val_loss': history.history['val_loss'][i],
+                'val_accuracy': history.history['val_accuracy'][i]
+            } for i in range(len(history.epoch))]
+        }
+        
+        return model, converted_history
 
 # 评估模型
 def evaluate_model(model, test_data):
