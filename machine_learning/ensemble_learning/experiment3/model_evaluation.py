@@ -6,6 +6,7 @@ import time
 import lightgbm as lgb
 import xgboost as xgb
 from sklearn.ensemble import RandomForestClassifier
+from sklearn.model_selection import train_test_split
 from sklearn.metrics import (accuracy_score, precision_score, recall_score, 
                              f1_score, roc_auc_score, confusion_matrix,
                              classification_report)
@@ -28,6 +29,10 @@ def compare_models(features, labels, feature_names, random_state=42, save_dir='.
         comparison_df: 模型比较结果DataFrame
     """
     print("\n开始比较不同模型性能...")
+
+    # 首先清洗数据中的异常值
+    print("\n清洗数据中的异常值...")
+    features = clean_data(features)
     
     # 创建结果保存目录
     if not os.path.exists(save_dir):
@@ -38,11 +43,17 @@ def compare_models(features, labels, feature_names, random_state=42, save_dir='.
     
     # 测试数据字典，用于后续可视化
     test_data_dict = {}
+
+    # 划分训练集和测试集
+    X_train, X_test, y_train, y_test = train_test_split(
+        features, labels, test_size=0.2, random_state=random_state, stratify=labels
+    )
     
     # 1. LightGBM模型 - 原始特征
     print("\n1. 训练LightGBM模型（原始特征）")
     lgbm_params = LIGHTGBM_PARAMS.copy()
     lgbm_params['random_state'] = random_state
+    lgbm_params['early_stopping_rounds'] = 20
     
     _, _, lgbm_metrics, lgbm_test_data = train_lightgbm_model(
         features, labels, feature_names,
@@ -85,7 +96,6 @@ def compare_models(features, labels, feature_names, random_state=42, save_dir='.
     
     # 3. XGBoost模型
     print("\n3. 训练XGBoost模型")
-    from sklearn.model_selection import train_test_split
     
     # 划分训练集和测试集
     X_train, X_test, y_train, y_test = train_test_split(
@@ -103,7 +113,7 @@ def compare_models(features, labels, feature_names, random_state=42, save_dir='.
     xgb_model.fit(
         X_train, y_train,
         eval_set=[(X_train, y_train), (X_test, y_test)],
-        early_stopping_rounds=50,
+        early_stopping_rounds=20,
         verbose=True
     )
     
@@ -230,8 +240,23 @@ def analyze_feature_robustness(model, X, y, feature_names, perturbation_ratio=0.
     if not os.path.exists(save_dir):
         os.makedirs(save_dir)
     
+    # 检查模型类型并使用适当的预测方法
+    if hasattr(model, 'predict_proba'):
+        # 标准scikit-learn API模型
+        print("使用predict_proba方法预测...")
+        y_pred = model.predict_proba(X)[:, 1]
+    elif hasattr(model, 'predict'):
+        # LightGBM Booster对象
+        print("使用predict方法预测...")
+        y_pred = model.predict(X)
+        # 如果输出不是概率，尝试转换
+        if np.max(y_pred) > 1.0 or np.min(y_pred) < 0.0:
+            print("预测值不是概率分布，进行归一化处理...")
+            y_pred = 1.0 / (1.0 + np.exp(-y_pred))  # sigmoid函数
+    else:
+        raise ValueError("模型没有可用的预测方法")
+    
     # 基准性能（无扰动）
-    y_pred = model.predict_proba(X)[:, 1]
     baseline_auc = roc_auc_score(y, y_pred)
     baseline_accuracy = accuracy_score(y, (y_pred > 0.5).astype(int))
     
@@ -260,8 +285,16 @@ def analyze_feature_robustness(model, X, y, feature_names, perturbation_ratio=0.
             noise = np.random.normal(0, feature_std * 0.5, X.shape[0])
             X_perturbed[:, idx] += noise
         
-        # 预测和评估
-        y_pred_perturbed = model.predict_proba(X_perturbed)[:, 1]
+        # 预测和评估（使用与模型类型对应的预测方法）
+        if hasattr(model, 'predict_proba'):
+            y_pred_perturbed = model.predict_proba(X_perturbed)[:, 1]
+        elif hasattr(model, 'predict'):
+            y_pred_perturbed = model.predict(X_perturbed)
+            # 如果输出不是概率，尝试转换
+            if np.max(y_pred_perturbed) > 1.0 or np.min(y_pred_perturbed) < 0.0:
+                y_pred_perturbed = 1.0 / (1.0 + np.exp(-y_pred_perturbed))  # sigmoid函数
+        
+        
         perturbed_auc = roc_auc_score(y, y_pred_perturbed)
         perturbed_accuracy = accuracy_score(y, (y_pred_perturbed > 0.5).astype(int))
         
@@ -324,21 +357,40 @@ def measure_inference_time(models_dict, X, n_repeats=100, save_dir='./results'):
     for model_name, model in models_dict.items():
         print(f"测量 {model_name} 模型的推理时间...")
         
+        # 检查模型类型
+        has_predict_proba = hasattr(model, 'predict_proba')
+        has_predict = hasattr(model, 'predict')
+        
+        if not (has_predict_proba or has_predict):
+            print(f"警告：{model_name} 模型没有predict_proba或predict方法，跳过")
+            continue
+            
+        # 预测函数封装
+        def predict_fn(X_data):
+            if has_predict_proba:
+                return model.predict_proba(X_data)[:, 1]
+            else:
+                preds = model.predict(X_data)
+                # 如果需要，转换为概率
+                if np.max(preds) > 1.0 or np.min(preds) < 0.0:
+                    return 1.0 / (1.0 + np.exp(-preds))
+                return preds
+        
         # 预热
-        _ = model.predict_proba(X[:10])
+        _ = predict_fn(X[:10])
         
         # 测量单个样本的推理时间
         single_sample_times = []
         for i in range(min(100, X.shape[0])):
             start_time = time.time()
-            _ = model.predict_proba(X[i:i+1])
+            _ = predict_fn(X[i:i+1])
             single_sample_times.append((time.time() - start_time) * 1000)  # 转换为毫秒
         
         # 测量批量推理时间
         batch_times = []
         for _ in range(n_repeats):
             start_time = time.time()
-            _ = model.predict_proba(X)
+            _ = predict_fn(X)
             batch_times.append((time.time() - start_time) * 1000 / X.shape[0])  # 平均到每个样本，转换为毫秒
         
         # 记录结果
@@ -382,3 +434,61 @@ def get_model_size(model):
     size_mb = sys.getsizeof(model_bytes.getvalue()) / (1024 * 1024)
     
     return round(size_mb, 2) 
+
+
+def clean_data(features, verbose=True):
+    """
+    清洗数据中的异常值（NaN、无穷大和极端值）
+    
+    参数:
+        features: 特征矩阵
+        verbose: 是否打印详细信息
+        
+    返回:
+        clean_features: 清洗后的特征矩阵
+    """
+    # 检测异常值
+    has_nan = np.isnan(features).any()
+    has_inf = np.isinf(features).any()
+    
+    if verbose:
+        print(f"数据中包含NaN: {has_nan}")
+        print(f"数据中包含无穷值: {has_inf}")
+    
+    if has_nan or has_inf:
+        if verbose:
+            print("正在清洗数据中的异常值...")
+        
+        # 创建数据副本以避免修改原始数据
+        features_clean = features.copy()
+        
+        # 替换NaN为0
+        if has_nan:
+            nan_count = np.isnan(features_clean).sum()
+            if verbose:
+                print(f"替换 {nan_count} 个NaN值为0")
+            features_clean = np.nan_to_num(features_clean, nan=0.0)
+        
+        # 替换无穷值
+        if has_inf:
+            inf_count = np.isinf(features_clean).sum()
+            if verbose:
+                print(f"替换 {inf_count} 个无穷值")
+            features_clean = np.nan_to_num(features_clean, posinf=1.0e10, neginf=-1.0e10)
+        
+        # 检查是否还有异常值
+        if np.isnan(features_clean).any() or np.isinf(features_clean).any():
+            if verbose:
+                print("警告：清洗后仍存在异常值！")
+        
+        # 检查数据范围
+        if verbose:
+            max_val = np.max(features_clean)
+            min_val = np.min(features_clean)
+            print(f"清洗后数据范围: [{min_val}, {max_val}]")
+        
+        return features_clean
+    else:
+        if verbose:
+            print("数据中没有异常值，无需清洗")
+        return features

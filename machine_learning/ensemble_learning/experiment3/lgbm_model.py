@@ -145,8 +145,10 @@ def train_lightgbm_model(features, labels, feature_names,
             num_boost_round=2000,
             valid_sets=[train_data, val_data],
             valid_names=['train', 'valid'],
-            early_stopping_rounds=50,
-            verbose_eval=100
+            callbacks=[
+                lgb.early_stopping(stopping_rounds=50), 
+                lgb.log_evaluation(period=100)
+            ]
         )
         
         # 保存模型
@@ -252,7 +254,7 @@ def train_lightgbm_model(features, labels, feature_names,
 
 def train_pca_lightgbm_model(features, labels, feature_names, 
                               n_components=10,
-                              n_splits=5, 
+                              n_splits=3, 
                               test_size=0.2,
                               random_state=42,
                               params=None,
@@ -276,7 +278,41 @@ def train_pca_lightgbm_model(features, labels, feature_names,
         metrics_results: 评估指标结果字典
     """
     print(f"\n开始训练基于PCA降维(保留{n_components}个主成分)的LightGBM模型...")
+
+
+    # 处理异常值
+    # 1. 检测并打印异常值信息
+    has_nan = np.isnan(features).any()
+    has_inf = np.isinf(features).any()
     
+    print(f"数据中包含NaN: {has_nan}")
+    print(f"数据中包含无穷值: {has_inf}")
+    
+    if has_nan or has_inf:
+        print("正在处理异常值...")
+        # 创建数据副本以避免修改原始数据
+        features_clean = features.copy()
+        
+        # 替换NaN为0
+        if has_nan:
+            nan_count = np.isnan(features_clean).sum()
+            print(f"替换 {nan_count} 个NaN值为0")
+            features_clean = np.nan_to_num(features_clean, nan=0.0)
+        
+        # 替换无穷值为非常大的有限值
+        if has_inf:
+            inf_count = np.isinf(features_clean).sum()
+            print(f"替换 {inf_count} 个无穷值")
+            features_clean = np.nan_to_num(features_clean, posinf=1.0e10, neginf=-1.0e10)
+        
+        # 检查数据范围，处理超出范围的值
+        max_val = np.max(features_clean)
+        min_val = np.min(features_clean)
+        print(f"清洗后数据范围: [{min_val}, {max_val}]")
+        
+        # 使用处理过的数据
+        features = features_clean
+        
     # 标准化特征
     scaler = StandardScaler()
     scaled_features = scaler.fit_transform(features)

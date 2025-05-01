@@ -15,7 +15,7 @@ from model_evaluation import (compare_models, analyze_feature_robustness,
 from constants import create_directories
 
 
-def run_all_experiments(result_dir='./results', figure_dir='./figures'):
+def run_all_experiments(result_dir='./experiment3/results', figure_dir='./experiment3/figures'):
     """
     运行所有实验
     
@@ -189,8 +189,8 @@ def main(args):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='运行PE恶意软件检测的LightGBM特征工程实验')
-    parser.add_argument('--result-dir', type=str, default='./results', help='结果保存目录')
-    parser.add_argument('--figure-dir', type=str, default='./figures', help='图表保存目录')
+    parser.add_argument('--result-dir', type=str, default='./experiment3/results', help='结果保存目录')
+    parser.add_argument('--figure-dir', type=str, default='./experiment3/figures', help='图表保存目录')
     parser.add_argument('--skip-experiments', action='store_true', help='跳过实验，仅生成图表')
     parser.add_argument('--seed', type=int, default=42, help='随机种子')
     

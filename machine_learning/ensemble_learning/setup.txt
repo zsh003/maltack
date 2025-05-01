@@ -18,3 +18,5 @@ conda env list  # 查看当前conda环境
 conda activate Datacon2020  # 激活conda环境
 jupyter notebook --allow-root  # 启动jupyter
 ```
+
+# pip install lightgbm --config-settings=cmake.define.USE_GPU=ON

@@ -258,8 +258,25 @@ def plot_data_distribution(X, y, feature_names, save_dir='./figures', top_n=5):
     
     # 使用t-SNE降维可视化
     print("执行t-SNE降维...")
+
+    # 检查并处理无穷大和NaN值
+    X_clean = X.copy()
+    
+    # 替换无穷大值为列最大值
+    X_clean = np.where(np.isinf(X_clean), np.nan, X_clean)
+    
+    # 填充NaN值为列中位数
+    from sklearn.impute import SimpleImputer
+    imputer = SimpleImputer(strategy='median')
+    X_clean = imputer.fit_transform(X_clean)
+    
+    # 数据标准化
+    from sklearn.preprocessing import StandardScaler
+    scaler = StandardScaler()
+    X_scaled = scaler.fit_transform(X_clean)
+    
     tsne = TSNE(n_components=2, random_state=42)
-    X_tsne = tsne.fit_transform(X)
+    X_tsne = tsne.fit_transform(X_scaled)
     
     plt.figure(figsize=(10, 8))
     plt.scatter(X_tsne[y == 0, 0], X_tsne[y == 0, 1], alpha=0.5, label='良性(0)')

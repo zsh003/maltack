@@ -18,36 +18,37 @@ WHITE_LIST_PATH = "../models/white_list.pkl"
 
 # 模型参数
 LIGHTGBM_PARAMS = {
-    'objective': 'binary',
+    'device': 'cpu',
+    'gpu_platform_id': 0,
+    'gpu_device_id': 0,
     'boosting_type': 'gbdt',
-    'boost_from_average': False,
-    'num_leaves': 128,
-    'max_depth': 6,
+    'objective': 'binary',
+    'metric': 'auc',
+    'num_leaves': 64,
     'learning_rate': 0.05,
-    'min_data_in_leaf': 20,
-    'min_sum_hessian_in_leaf': 1e-3,
-    'feature_fraction': 0.8,
+    'feature_fraction': 0.9,
     'bagging_fraction': 0.8,
     'bagging_freq': 5,
-    'lambda_l1': 0.1,
-    'lambda_l2': 0.1,
-    'metric': 'auc',
-    'verbosity': -1
+    'verbose': 0,
+    'n_estimators': 50,
+    'n_jobs': -1
 }
 
 XGBOOST_PARAMS = {
-    'objective': 'binary:logistic',
+    #'tree_method': 'gpu_hist',  # 使用GPU
+    'gpu_id': 0,
     'max_depth': 6,
     'learning_rate': 0.05,
-    'n_estimators': 2000,
-    'subsample': 0.8,
-    'colsample_bytree': 0.8,
+    'objective': 'binary:logistic',
     'eval_metric': 'auc',
-    'verbosity': 1
+    'colsample_bytree': 0.9,
+    'subsample': 0.8,
+    'n_estimators': 50,
+    'n_jobs': -1
 }
 
 RANDOM_FOREST_PARAMS = {
-    'n_estimators': 500,
+    'n_estimators': 50,
     'max_depth': 10,
     'min_samples_split': 2,
     'min_samples_leaf': 1,
@@ -58,10 +59,10 @@ RANDOM_FOREST_PARAMS = {
 # 创建所需目录
 def create_directories():
     """创建所需的目录"""
-    directories = ['./results', './figures', 
-                  './results/lightgbm', './results/lightgbm_pca',
-                  './results/xgboost', './results/random_forest',
-                  './results/robustness', './results/inference_time']
+    directories = ['./experiment3/results', './experiment3/figures', 
+                  './experiment3/results/lightgbm', './experiment3/results/lightgbm_pca',
+                  './experiment3/results/xgboost', './experiment3/results/random_forest',
+                  './experiment3/results/robustness', './experiment3/results/inference_time']
     
     for directory in directories:
         if not os.path.exists(directory):
