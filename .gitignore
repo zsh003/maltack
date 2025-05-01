@@ -11,6 +11,7 @@ __pycache__
 build
 .DS_Store
 npm-debug.log*
+.cursorignore
 
 yarn.lock
 package-lock.json
