@@ -68,9 +68,10 @@ def run_model_ablation_experiment(features, labels, result_dir='./results'):
         result_dir: 结果保存目录
     
     返回:
-        ablation_results: DataFrame，包含消融实验结果
+        model_ablation_results: DataFrame，包含模型消融实验结果
+        base_model_performance: DataFrame，包含基模型独立性能
     """
-    print("开始模型消融实验...")
+    print(f"开始模型消融实验... 数据集大小: {features.shape}, 标签分布: {np.bincount(labels)}")
     
     # 创建结果目录
     if not os.path.exists(result_dir):
@@ -78,31 +79,36 @@ def run_model_ablation_experiment(features, labels, result_dir='./results'):
     
     # 划分数据
     X_train, X_test, y_train, y_test = train_test_split_data(features, labels)
+    print(f"数据集划分完成：训练集：{X_train.shape}, 测试集：{X_test.shape}")
     
     # 预处理特征
-    X_train_scaled, X_test_scaled = preprocess_features(X_train, X_test)
+    X_train, X_test = preprocess_features(X_train, X_test)
+    print("特征标准化完成")
     
     # 获取所有基模型
     base_models = get_base_models()
     model_names = list(base_models.keys())
+    print(f"已加载 {len(base_models)} 个基模型: {', '.join(model_names)}")
     
     # 创建元模型
     meta_model = RandomForestClassifier(n_estimators=200, max_depth=10, random_state=42)
     
     # 记录实验结果
-    ablation_results = []
+    model_ablation_results = []
     
     # 1. 首先训练完整模型，包含所有基模型
     print("训练完整模型（包含所有基模型）...")
+    
     full_model = StackingEnsemble(base_models_dict=base_models, meta_model=meta_model)
-    full_model.train_base_models(X_train_scaled, y_train, X_test_scaled)
+    full_model.train_base_models(X_train, y_train, X_test)
     full_model.train_meta_model(y_train)
-    full_metrics, _, _ = full_model.evaluate(X_test_scaled, y_test)
+    full_metrics, _, _ = full_model.evaluate(X_test, y_test)
     
     # 记录完整模型的性能
-    ablation_results.append({
-        'model_name': 'full_model',
+    model_ablation_results.append({
+        'model_config': 'full_ensemble',
         'removed_model': None,
+        'model_count': len(base_models),
         'accuracy': full_metrics['accuracy'],
         'precision': full_metrics['precision'],
         'recall': full_metrics['recall'],
@@ -111,45 +117,48 @@ def run_model_ablation_experiment(features, labels, result_dir='./results'):
     })
     
     # 评估每个基模型的单独性能
-    base_model_metrics = full_model.evaluate_base_models(X_test_scaled, y_test)
+    base_model_metrics = full_model.evaluate_base_models(X_test, y_test)
     
     # 2. 逐一移除每个基模型，测试对整体性能的影响
-    for model_name in model_names:
-        print(f"移除模型: {model_name}")
+    for model_name in base_models.keys():
+        print(f"移除基模型: {model_name}")
         
-        # 创建除当前模型外的所有基模型的副本
+        # 创建不包含当前模型的模型集合
         reduced_models = {k: v for k, v in base_models.items() if k != model_name}
         
-        # 训练减少模型
-        ablation_model = StackingEnsemble(base_models_dict=reduced_models, meta_model=meta_model)
-        ablation_model.train_base_models(X_train_scaled, y_train, X_test_scaled)
-        ablation_model.train_meta_model(y_train)
-        ablation_metrics, _, _ = ablation_model.evaluate(X_test_scaled, y_test)
+        # 训练减少模型的集成
+        reduced_model = StackingEnsemble(base_models_dict=reduced_models, meta_model=meta_model)
+        reduced_model.train_base_models(X_train, y_train, X_test)
+        reduced_model.train_meta_model(y_train)
+        reduced_metrics, _, _ = reduced_model.evaluate(X_test, y_test)
         
         # 记录结果
-        ablation_results.append({
-            'model_name': f'without_{model_name}',
+        model_ablation_results.append({
+            'model_config': f'without_{model_name}',
             'removed_model': model_name,
-            'accuracy': ablation_metrics['accuracy'],
-            'precision': ablation_metrics['precision'],
-            'recall': ablation_metrics['recall'],
-            'f1': ablation_metrics['f1'],
-            'auc': ablation_metrics['auc']
+            'model_count': len(reduced_models),
+            'accuracy': reduced_metrics['accuracy'],
+            'precision': reduced_metrics['precision'],
+            'recall': reduced_metrics['recall'],
+            'f1': reduced_metrics['f1'],
+            'auc': reduced_metrics['auc']
         })
     
     # 创建结果DataFrame
-    ablation_df = pd.DataFrame(ablation_results)
-    
-    # 保存结果
-    ablation_df.to_csv(os.path.join(result_dir, 'model_ablation_results.csv'), index=False)
+    ablation_df = pd.DataFrame(model_ablation_results)
     
     # 计算每个模型消融后与完整模型的性能差异
-    full_model_metrics = ablation_df[ablation_df['model_name'] == 'full_model'].iloc[0]
+    full_model_metrics = ablation_df[ablation_df['model_config'] == 'full_ensemble'].iloc[0]
     ablation_df['auc_diff'] = full_model_metrics['auc'] - ablation_df['auc']
     ablation_df['f1_diff'] = full_model_metrics['f1'] - ablation_df['f1']
     
+    # 保存结果 - 确保包含auc_diff和f1_diff列
+    ablation_df.to_csv(os.path.join(result_dir, 'model_ablation_results.csv'), index=False)
+    print(f"模型消融实验结果已保存，包含列: {', '.join(ablation_df.columns)}")
+    
     # 保存基模型单独性能
     base_model_metrics.to_csv(os.path.join(result_dir, 'base_model_performance.csv'), index=False)
+    print(f"基模型性能结果已保存，包含列: {', '.join(base_model_metrics.columns)}")
     
     print("模型消融实验完成！")
     
@@ -167,7 +176,14 @@ def run_feature_ablation_experiment(features, labels, result_dir='./results'):
     返回:
         feature_ablation_results: DataFrame，包含特征消融实验结果
     """
-    print("开始特征消融实验...")
+    print(f"开始特征消融实验... 完整特征维度: {features.shape}")
+    print(f"特征组信息:")
+    for group_name, feature_slice in FEATURE_GROUPS.items():
+        if isinstance(feature_slice, slice):
+            group_size = feature_slice.stop - feature_slice.start
+            print(f"  - {group_name}: {feature_slice.start}-{feature_slice.stop-1} ({group_size}维)")
+        else:
+            print(f"  - {group_name}: {len(feature_slice)}维")
     
     # 创建结果目录
     if not os.path.exists(result_dir):
@@ -175,9 +191,11 @@ def run_feature_ablation_experiment(features, labels, result_dir='./results'):
     
     # 划分数据
     X_train, X_test, y_train, y_test = train_test_split_data(features, labels)
+    print(f"数据集划分完成：训练集：{X_train.shape}, 测试集：{X_test.shape}")
     
     # 获取所有基模型
     base_models = get_base_models()
+    print(f"使用 {len(base_models)} 个基模型进行特征消融实验")
     
     # 创建元模型
     meta_model = RandomForestClassifier(n_estimators=200, max_depth=10, random_state=42)
@@ -242,13 +260,14 @@ def run_feature_ablation_experiment(features, labels, result_dir='./results'):
     # 创建结果DataFrame
     feature_ablation_df = pd.DataFrame(feature_ablation_results)
     
-    # 保存结果
-    feature_ablation_df.to_csv(os.path.join(result_dir, 'feature_ablation_results.csv'), index=False)
-    
     # 计算每个特征组消融后与完整特征的性能差异
     full_feature_metrics = feature_ablation_df[feature_ablation_df['feature_group'] == 'full_features'].iloc[0]
     feature_ablation_df['auc_diff'] = full_feature_metrics['auc'] - feature_ablation_df['auc']
     feature_ablation_df['f1_diff'] = full_feature_metrics['f1'] - feature_ablation_df['f1']
+    
+    # 保存结果 - 确保包含auc_diff和f1_diff列
+    feature_ablation_df.to_csv(os.path.join(result_dir, 'feature_ablation_results.csv'), index=False)
+    print(f"特征消融实验结果已保存，包含列: {', '.join(feature_ablation_df.columns)}")
     
     print("特征消融实验完成！")
     
@@ -280,8 +299,8 @@ def run_all_experiments(result_dir='./results'):
     # 返回所有实验结果
     return {
         'model_ablation_results': model_ablation_results,
-        'base_model_performance': base_model_performance,
-        'feature_ablation_results': feature_ablation_results
+        'feature_ablation_results': feature_ablation_results,
+        'base_model_performance': base_model_performance
     }
 
 

@@ -22,15 +22,22 @@ def plot_model_ablation_results(ablation_df, save_dir):
         os.makedirs(save_dir)
     
     # 过滤掉完整模型的结果
-    ablation_subset = ablation_df[ablation_df['model_name'] != 'full_model'].copy()
+    ablation_subset = ablation_df[ablation_df['model_config'] != 'full_ensemble'].copy()
+    
+    # 提取出完整模型的性能指标
+    full_model_metrics = ablation_df[ablation_df['model_config'] == 'full_ensemble'].iloc[0]
+    full_model_auc = full_model_metrics['auc']
+    full_model_f1 = full_model_metrics['f1']
+    
+    # 确保有auc_diff和f1_diff列，如果没有就计算它们
+    if 'auc_diff' not in ablation_subset.columns:
+        ablation_subset['auc_diff'] = full_model_auc - ablation_subset['auc']
+    
+    if 'f1_diff' not in ablation_subset.columns:
+        ablation_subset['f1_diff'] = full_model_f1 - ablation_subset['f1']
     
     # 排序，使差异大的在前面
     ablation_subset = ablation_subset.sort_values(by='auc_diff', ascending=False)
-    
-    # 提取出完整模型的性能指标
-    full_model_metrics = ablation_df[ablation_df['model_name'] == 'full_model'].iloc[0]
-    full_model_auc = full_model_metrics['auc']
-    full_model_f1 = full_model_metrics['f1']
     
     # 1. 绘制AUC差异图
     plt.figure(figsize=(12, 8))
@@ -87,10 +94,10 @@ def plot_model_ablation_results(ablation_df, save_dir):
     # 3. 绘制雷达图比较各个模型的性能
     # 准备数据
     model_names = list(ablation_subset['removed_model'])
-    model_names.append('full_model')  # 添加完整模型
+    model_names.append('full_ensemble')  # 添加完整模型
     
     # 找到完整模型的行
-    full_model_row = ablation_df[ablation_df['model_name'] == 'full_model'].iloc[0]
+    full_model_row = ablation_df[ablation_df['model_config'] == 'full_ensemble'].iloc[0]
     
     # 合并数据
     ablation_with_full = pd.concat([ablation_subset, pd.DataFrame([full_model_row])])
@@ -110,11 +117,12 @@ def plot_model_ablation_results(ablation_df, save_dir):
     
     # 绘制每个模型的雷达图
     for idx, model in enumerate(ablation_with_full.iterrows()):
-        model_name = model[1]['removed_model'] if not pd.isna(model[1]['removed_model']) else 'full_model'
+        model_config = model[1]['model_config']
+        model_name = model[1]['removed_model'] if not pd.isna(model[1]['removed_model']) else 'full_ensemble'
         values = [model[1][metric] for metric in metrics]
         values += values[:1]  # 闭合图形
         
-        if model_name == 'full_model':
+        if model_config == 'full_ensemble':
             ax.plot(angles, values, 'o-', linewidth=2, label=f'完整模型')
             ax.fill(angles, values, alpha=0.1)
         else:
@@ -211,13 +219,20 @@ def plot_feature_ablation_results(feature_ablation_df, save_dir):
     # 过滤掉完整特征的结果
     feature_subset = feature_ablation_df[feature_ablation_df['feature_group'] != 'full_features'].copy()
     
-    # 排序，使差异大的在前面
-    feature_subset = feature_subset.sort_values(by='auc_diff', ascending=False)
-    
     # 提取出完整特征的性能指标
     full_feature_metrics = feature_ablation_df[feature_ablation_df['feature_group'] == 'full_features'].iloc[0]
     full_feature_auc = full_feature_metrics['auc']
     full_feature_f1 = full_feature_metrics['f1']
+    
+    # 确保有auc_diff和f1_diff列，如果没有就计算它们
+    if 'auc_diff' not in feature_subset.columns:
+        feature_subset['auc_diff'] = full_feature_auc - feature_subset['auc']
+    
+    if 'f1_diff' not in feature_subset.columns:
+        feature_subset['f1_diff'] = full_feature_f1 - feature_subset['f1']
+    
+    # 排序，使差异大的在前面
+    feature_subset = feature_subset.sort_values(by='auc_diff', ascending=False)
     
     # 1. 绘制AUC差异图
     plt.figure(figsize=(12, 8))
@@ -275,168 +290,191 @@ def plot_feature_ablation_results(feature_ablation_df, save_dir):
     plt.savefig(os.path.join(save_dir, 'feature_ablation_f1_diff.png'), dpi=300)
     plt.close()
     
-    # 3. 绘制特征维度与性能的关系图
-    plt.figure(figsize=(10, 6))
+    # 3. 绘制雷达图比较各个特征组的性能
+    # 准备数据
+    feature_group_names = list(feature_subset['removed_feature'])
+    feature_group_names.append('full_features')  # 添加完整特征
     
-    full_features_row = feature_ablation_df[feature_ablation_df['feature_group'] == 'full_features'].iloc[0]
-    feature_subset_with_full = pd.concat([feature_subset, pd.DataFrame([full_features_row])])
+    # 找到完整特征的行
+    full_feature_row = feature_ablation_df[feature_ablation_df['feature_group'] == 'full_features'].iloc[0]
     
-    # 按特征维度排序
-    feature_subset_with_full = feature_subset_with_full.sort_values(by='feature_dim')
+    # 合并数据
+    feature_with_full = pd.concat([feature_subset, pd.DataFrame([full_feature_row])])
     
-    # 提取特征组名称，对于完整特征使用"全部特征"
-    feature_names = []
-    for name in feature_subset_with_full['feature_group']:
-        if name == 'full_features':
-            feature_names.append('全部特征')
+    # 准备雷达图数据
+    metrics = ['accuracy', 'precision', 'recall', 'f1', 'auc']
+    
+    # 创建一个图表
+    fig, ax = plt.subplots(figsize=(10, 8), subplot_kw=dict(polar=True))
+    
+    # 角度
+    angles = np.linspace(0, 2*np.pi, len(metrics), endpoint=False).tolist()
+    angles += angles[:1]  # 闭合图形
+    
+    # 添加轴标签
+    plt.xticks(angles[:-1], metrics)
+    
+    # 绘制每个特征组的雷达图
+    for idx, feature in enumerate(feature_with_full.iterrows()):
+        feature_group = feature[1]['feature_group']
+        feature_name = feature[1]['removed_feature'] if not pd.isna(feature[1]['removed_feature']) else 'full_features'
+        values = [feature[1][metric] for metric in metrics]
+        values += values[:1]  # 闭合图形
+        
+        if feature_group == 'full_features':
+            ax.plot(angles, values, 'o-', linewidth=2, label=f'完整特征')
+            ax.fill(angles, values, alpha=0.1)
         else:
-            feature_names.append(name.replace('without_', '去除'))
+            ax.plot(angles, values, 'o-', linewidth=1, alpha=0.7, label=f'移除{feature_name}')
     
-    plt.plot(feature_subset_with_full['feature_dim'], feature_subset_with_full['auc'], 'o-', label='AUC')
-    plt.plot(feature_subset_with_full['feature_dim'], feature_subset_with_full['f1'], 's-', label='F1分数')
+    # 添加图例
+    plt.legend(loc='upper right', bbox_to_anchor=(0.1, 0.1))
     
-    # 添加数据标签
-    for i, (dim, auc, f1, name) in enumerate(zip(feature_subset_with_full['feature_dim'], 
-                                               feature_subset_with_full['auc'],
-                                               feature_subset_with_full['f1'],
-                                               feature_names)):
-        plt.annotate(f'{name}\n维度:{dim}', 
-                   (dim, auc), 
-                   textcoords="offset points", 
-                   xytext=(0, 10), 
-                   ha='center')
-    
-    plt.xlabel('特征维度')
-    plt.ylabel('性能指标')
-    plt.title('特征维度与模型性能的关系')
-    plt.grid(True, linestyle='--', alpha=0.7)
-    plt.legend()
+    plt.title('不同特征组的性能雷达图')
     plt.tight_layout()
     
     # 保存图像
-    plt.savefig(os.path.join(save_dir, 'feature_dimension_performance.png'), dpi=300)
+    plt.savefig(os.path.join(save_dir, 'feature_ablation_radar.png'), dpi=300)
     plt.close()
 
 def plot_stacking_vs_base_models(model_ablation_df, base_model_df, save_dir):
     """
-    绘制Stacking模型与基模型性能对比图
+    绘制Stacking与各个基模型性能对比图
     
     参数:
-        model_ablation_df: DataFrame，包含模型消融实验结果
-        base_model_df: DataFrame，包含基模型性能
+        model_ablation_df: DataFrame, 包含模型消融实验结果
+        base_model_df: DataFrame, 包含基模型性能评估结果
         save_dir: 保存目录
     """
     # 创建保存目录
     if not os.path.exists(save_dir):
         os.makedirs(save_dir)
     
-    # 获取Stacking模型性能
-    stacking_metrics = model_ablation_df[model_ablation_df['model_name'] == 'full_model'].iloc[0]
+    # 获取完整集成模型的性能
+    stacking_performance = model_ablation_df[model_ablation_df['model_config'] == 'full_ensemble'].iloc[0]
     
-    # 1. 绘制AUC对比图
-    plt.figure(figsize=(14, 8))
+    # 准备比较数据
+    models = list(base_model_df['model'])
+    models.append('Stacking Ensemble')
     
-    # 按AUC排序
-    base_models_sorted = base_model_df.sort_values(by='auc', ascending=True)
+    # 合并性能指标数据
+    performance_data = []
     
-    # 提取模型名称和AUC值
-    models = list(base_models_sorted['model'])
-    models.append('Stacking')
+    # 添加基模型性能
+    for idx, row in base_model_df.iterrows():
+        performance_data.append({
+            'model': row['model'],
+            'accuracy': row['accuracy'],
+            'precision': row['precision'],
+            'recall': row['recall'],
+            'f1': row['f1'],
+            'auc': row['auc']
+        })
     
-    auc_values = list(base_models_sorted['auc'])
-    auc_values.append(stacking_metrics['auc'])
+    # 添加Stacking模型性能
+    performance_data.append({
+        'model': 'Stacking Ensemble',
+        'accuracy': stacking_performance['accuracy'],
+        'precision': stacking_performance['precision'],
+        'recall': stacking_performance['recall'],
+        'f1': stacking_performance['f1'],
+        'auc': stacking_performance['auc']
+    })
     
-    # 确定颜色，Stacking模型使用不同颜色
-    colors = ['skyblue'] * len(base_models_sorted) + ['red']
+    # 转换为DataFrame
+    performance_df = pd.DataFrame(performance_data)
     
-    # 绘制水平条形图
-    y_pos = np.arange(len(models))
-    bars = plt.barh(y_pos, auc_values, color=colors)
+    # 按AUC降序排序
+    performance_df = performance_df.sort_values(by='auc', ascending=False)
     
-    # 添加数据标签
-    for i, bar in enumerate(bars):
-        width = bar.get_width()
-        plt.text(width + 0.01, bar.get_y() + bar.get_height()/2,
-                 f'{width:.3f}',
-                 ha='left', va='center')
+    # 1. 绘制AUC和F1分数条形图
+    plt.figure(figsize=(16, 10))
     
-    plt.yticks(y_pos, models)
-    plt.xlabel('AUC值')
-    plt.title('Stacking模型与各基模型的AUC对比')
-    plt.xlim(0.75, 1.0)
-    plt.grid(axis='x', linestyle='--', alpha=0.7)
-    plt.tight_layout()
+    x = np.arange(len(performance_df))
+    width = 0.35
     
-    # 保存图像
-    plt.savefig(os.path.join(save_dir, 'stacking_vs_base_models_auc.png'), dpi=300)
-    plt.close()
+    bars1 = plt.bar(x - width/2, performance_df['auc'], width, label='AUC', color='skyblue')
+    bars2 = plt.bar(x + width/2, performance_df['f1'], width, label='F1分数', color='lightgreen')
     
-    # 2. 绘制F1分数对比图
-    plt.figure(figsize=(14, 8))
-    
-    # 按F1分数排序
-    base_models_sorted = base_model_df.sort_values(by='f1', ascending=True)
-    
-    # 提取模型名称和F1值
-    models = list(base_models_sorted['model'])
-    models.append('Stacking')
-    
-    f1_values = list(base_models_sorted['f1'])
-    f1_values.append(stacking_metrics['f1'])
-    
-    # 绘制水平条形图
-    y_pos = np.arange(len(models))
-    bars = plt.barh(y_pos, f1_values, color=colors)
+    # 高亮Stacking模型
+    for i, model in enumerate(performance_df['model']):
+        if model == 'Stacking Ensemble':
+            bars1[i].set_color('navy')
+            bars2[i].set_color('darkgreen')
     
     # 添加数据标签
-    for i, bar in enumerate(bars):
-        width = bar.get_width()
-        plt.text(width + 0.01, bar.get_y() + bar.get_height()/2,
-                 f'{width:.3f}',
-                 ha='left', va='center')
-    
-    plt.yticks(y_pos, models)
-    plt.xlabel('F1分数')
-    plt.title('Stacking模型与各基模型的F1分数对比')
-    plt.xlim(0.75, 1.0)
-    plt.grid(axis='x', linestyle='--', alpha=0.7)
-    plt.tight_layout()
-    
-    # 保存图像
-    plt.savefig(os.path.join(save_dir, 'stacking_vs_base_models_f1.png'), dpi=300)
-    plt.close()
-    
-    # 3. 绘制综合性能提升图
-    plt.figure(figsize=(12, 8))
-    
-    # 计算Stacking相对于基模型的性能提升
-    metrics = ['accuracy', 'precision', 'recall', 'f1', 'auc']
-    
-    # 获取基模型的平均性能
-    base_avg = {}
-    for metric in metrics:
-        base_avg[metric] = base_model_df[metric].mean()
-    
-    # 计算提升比例
-    improvements = {}
-    for metric in metrics:
-        improvements[metric] = (stacking_metrics[metric] - base_avg[metric]) / base_avg[metric] * 100
-    
-    # 绘制条形图
-    x_pos = np.arange(len(metrics))
-    bars = plt.bar(x_pos, [improvements[m] for m in metrics], color='lightgreen')
-    
-    # 添加数据标签
-    for bar in bars:
+    for bar in bars1:
         height = bar.get_height()
         plt.text(bar.get_x() + bar.get_width()/2., height,
-                 f'{height:.2f}%',
+                 f'{height:.3f}',
                  ha='center', va='bottom')
     
-    plt.xticks(x_pos, metrics)
-    plt.ylabel('提升百分比 (%)')
-    plt.title('Stacking模型相对于基模型平均性能的提升')
+    for bar in bars2:
+        height = bar.get_height()
+        plt.text(bar.get_x() + bar.get_width()/2., height,
+                 f'{height:.3f}',
+                 ha='center', va='bottom')
+    
+    plt.xlabel('模型')
+    plt.ylabel('性能指标')
+    plt.title('Stacking集成与各基模型的AUC和F1分数对比')
+    plt.xticks(x, performance_df['model'], rotation=45, ha='right')
+    plt.ylim(0.75, 1.0)
+    plt.legend()
     plt.grid(axis='y', linestyle='--', alpha=0.7)
+    plt.tight_layout()
+    
+    # 保存图像
+    plt.savefig(os.path.join(save_dir, 'stacking_vs_base_models.png'), dpi=300)
+    plt.close()
+    
+    # 2. 绘制性能提升条形图
+    plt.figure(figsize=(14, 8))
+    
+    # 计算Stacking相对于各基模型的性能提升
+    stacking_auc = stacking_performance['auc']
+    stacking_f1 = stacking_performance['f1']
+    
+    improvement_data = []
+    
+    for idx, row in base_model_df.iterrows():
+        improvement_data.append({
+            'model': row['model'],
+            'auc_improvement': stacking_auc - row['auc'],
+            'f1_improvement': stacking_f1 - row['f1']
+        })
+    
+    # 转换为DataFrame
+    improvement_df = pd.DataFrame(improvement_data)
+    
+    # 按AUC提升降序排序
+    improvement_df = improvement_df.sort_values(by='auc_improvement', ascending=False)
+    
+    x = np.arange(len(improvement_df))
+    width = 0.35
+    
+    bars1 = plt.bar(x - width/2, improvement_df['auc_improvement'], width, label='AUC提升', color='lightcoral')
+    bars2 = plt.bar(x + width/2, improvement_df['f1_improvement'], width, label='F1分数提升', color='lightsalmon')
+    
+    # 添加数据标签
+    for bar in bars1:
+        height = bar.get_height()
+        plt.text(bar.get_x() + bar.get_width()/2., height,
+                 f'{height:.3f}',
+                 ha='center', va='bottom')
+    
+    for bar in bars2:
+        height = bar.get_height()
+        plt.text(bar.get_x() + bar.get_width()/2., height,
+                 f'{height:.3f}',
+                 ha='center', va='bottom')
+    
+    plt.xlabel('基模型')
+    plt.ylabel('性能提升')
+    plt.title('Stacking集成相对于各基模型的性能提升')
+    plt.xticks(x, improvement_df['model'], rotation=45, ha='right')
+    plt.grid(axis='y', linestyle='--', alpha=0.7)
+    plt.legend()
     plt.tight_layout()
     
     # 保存图像
@@ -448,40 +486,66 @@ def create_all_visualizations(result_dir='./results', save_dir='./figures'):
     创建所有可视化图表
     
     参数:
-        result_dir: 结果目录，包含消融实验的CSV文件
-        save_dir: 保存可视化图表的目录
+        result_dir: 结果目录
+        save_dir: 图表保存目录
     """
+    print("开始创建所有可视化图表...")
+    
     # 创建保存目录
     if not os.path.exists(save_dir):
         os.makedirs(save_dir)
     
-    # 加载模型消融实验结果
-    model_ablation_path = os.path.join(result_dir, 'model_ablation_results.csv')
-    if os.path.exists(model_ablation_path):
-        model_ablation_df = pd.read_csv(model_ablation_path)
-        plot_model_ablation_results(model_ablation_df, save_dir)
-    else:
-        print(f"找不到模型消融实验结果: {model_ablation_path}")
+    # 1. 加载和绘制模型消融实验结果
+    model_ablation_file = os.path.join(result_dir, 'model_ablation_results.csv')
+    try:
+        if os.path.exists(model_ablation_file):
+            model_ablation_df = pd.read_csv(model_ablation_file)
+            print(f"已加载模型消融实验结果，形状: {model_ablation_df.shape}, 列: {', '.join(model_ablation_df.columns)}")
+            plot_model_ablation_results(model_ablation_df, save_dir)
+            print("模型消融实验图表创建完成")
+        else:
+            print(f"未找到模型消融实验结果文件: {model_ablation_file}")
+    except Exception as e:
+        print(f"创建模型消融实验图表时出错: {str(e)}")
     
-    # 加载基模型性能结果
-    base_model_path = os.path.join(result_dir, 'base_model_performance.csv')
-    if os.path.exists(base_model_path):
-        base_model_df = pd.read_csv(base_model_path)
-        plot_base_model_performance(base_model_df, save_dir)
-        
-        # 绘制Stacking与基模型的对比图
-        if os.path.exists(model_ablation_path):
+    # 2. 加载和绘制基模型性能结果
+    base_model_file = os.path.join(result_dir, 'base_model_performance.csv')
+    try:
+        if os.path.exists(base_model_file):
+            base_model_df = pd.read_csv(base_model_file)
+            print(f"已加载基模型性能结果，形状: {base_model_df.shape}, 列: {', '.join(base_model_df.columns)}")
+            plot_base_model_performance(base_model_df, save_dir)
+            print("基模型性能图表创建完成")
+        else:
+            print(f"未找到基模型性能结果文件: {base_model_file}")
+    except Exception as e:
+        print(f"创建基模型性能图表时出错: {str(e)}")
+    
+    # 3. 加载和绘制特征消融实验结果
+    feature_ablation_file = os.path.join(result_dir, 'feature_ablation_results.csv')
+    try:
+        if os.path.exists(feature_ablation_file):
+            feature_ablation_df = pd.read_csv(feature_ablation_file)
+            print(f"已加载特征消融实验结果，形状: {feature_ablation_df.shape}, 列: {', '.join(feature_ablation_df.columns)}")
+            plot_feature_ablation_results(feature_ablation_df, save_dir)
+            print("特征消融实验图表创建完成")
+        else:
+            print(f"未找到特征消融实验结果文件: {feature_ablation_file}")
+    except Exception as e:
+        print(f"创建特征消融实验图表时出错: {str(e)}")
+    
+    # 4. 绘制Stacking与基模型的对比图
+    try:
+        if os.path.exists(model_ablation_file) and os.path.exists(base_model_file):
             plot_stacking_vs_base_models(model_ablation_df, base_model_df, save_dir)
-    else:
-        print(f"找不到基模型性能结果: {base_model_path}")
+            print("Stacking与基模型对比图表创建完成")
+        else:
+            print("缺少绘制Stacking与基模型对比图所需的文件")
+    except Exception as e:
+        print(f"创建Stacking与基模型对比图表时出错: {str(e)}")
     
-    # 加载特征消融实验结果
-    feature_ablation_path = os.path.join(result_dir, 'feature_ablation_results.csv')
-    if os.path.exists(feature_ablation_path):
-        feature_ablation_df = pd.read_csv(feature_ablation_path)
-        plot_feature_ablation_results(feature_ablation_df, save_dir)
-    else:
-        print(f"找不到特征消融实验结果: {feature_ablation_path}")
+    print(f"所有可视化图表已保存到目录: {save_dir}")
+    return True
 
 
 if __name__ == "__main__":

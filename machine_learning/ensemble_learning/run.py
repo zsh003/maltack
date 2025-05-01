@@ -159,7 +159,7 @@ if __name__ == '__main__':
     
     start_time = time.time()
 
-    
+
     """
     # 直方图特征
     os.system("rm -rf ../histogram")
@@ -174,7 +174,7 @@ if __name__ == '__main__':
     start_time = end_time
 
     """
-
+    """
     # PE静态特征
     os.system("rm -rf ../pe_raw")
     os.makedirs("../pe_raw")
@@ -205,6 +205,6 @@ if __name__ == '__main__':
     with open("../feature_engineering/feature_engineering_features.pkl", 'wb') as f:
         pickle.dump(list(feature_engineering_features), f)
     
-    """
+    
 
     print("Preprecess done.")

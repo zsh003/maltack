@@ -23,12 +23,18 @@ class StackingEnsemble:
             n_folds: 交叉验证折数
         """
         self.base_models_dict = base_models_dict if base_models_dict else {}
-        self.meta_model = meta_model if meta_model else RandomForestClassifier(n_estimators=200, max_depth=10, random_state=42)
+        
+        # 修复：直接初始化元模型，避免嵌套结构
+        if meta_model is None:
+            self.meta_model = RandomForestClassifier(n_estimators=200, max_depth=10, random_state=42)
+        else:
+            self.meta_model = meta_model
+            
         self.n_folds = n_folds
         self.base_oof_train = {}
         self.base_oof_test = {}
         self.base_models_trained = {}
-        
+ 
     def add_base_model(self, name, model):
         """添加基模型"""
         self.base_models_dict[name] = model
@@ -98,11 +104,32 @@ class StackingEnsemble:
                     trained_models[model_name].append(model_copy)
                     
                     # 验证集上的预测
-                    oof_train[model_name][valid_idx] = model_copy.predict_proba(fold_x_valid)[:, 1].reshape(-1, 1)
+                    # 处理没有predict_proba方法的模型（如LinearSVC）
+                    if hasattr(model_copy, 'predict_proba'):
+                        oof_train[model_name][valid_idx] = model_copy.predict_proba(fold_x_valid)[:, 1].reshape(-1, 1)
+                    else:
+                        # 使用decision_function作为替代，或者直接用predict
+                        if hasattr(model_copy, 'decision_function'):
+                            # 对于LinearSVC等模型使用decision_function
+                            decision_values = model_copy.decision_function(fold_x_valid)
+                            # 转换为伪概率值（通过Sigmoid函数或归一化）
+                            proba = 1 / (1 + np.exp(-decision_values))
+                        else:
+                            # 如果没有decision_function，使用predict
+                            proba = model_copy.predict(fold_x_valid)
+                        oof_train[model_name][valid_idx] = proba.reshape(-1, 1)
                     
                     # 测试集上的预测
                     if X_test is not None:
-                        oof_test_fold[i, :] = model_copy.predict_proba(X_test)[:, 1]
+                        if hasattr(model_copy, 'predict_proba'):
+                            oof_test_fold[i, :] = model_copy.predict_proba(X_test)[:, 1]
+                        else:
+                            # 处理没有predict_proba方法的模型
+                            if hasattr(model_copy, 'decision_function'):
+                                decision_values = model_copy.decision_function(X_test)
+                                oof_test_fold[i, :] = 1 / (1 + np.exp(-decision_values))
+                            else:
+                                oof_test_fold[i, :] = model_copy.predict(X_test)
                     
                     pbar.update(1)
             
@@ -150,7 +177,17 @@ class StackingEnsemble:
             # 所有fold模型在测试集上的预测取平均
             fold_preds = []
             for model in self.base_models_trained[model_name]:
-                fold_preds.append(model.predict_proba(X_test)[:, 1])
+                # 处理没有predict_proba方法的模型
+                if hasattr(model, 'predict_proba'):
+                    fold_preds.append(model.predict_proba(X_test)[:, 1])
+                else:
+                    # 使用decision_function或predict作为替代
+                    if hasattr(model, 'decision_function'):
+                        decision_values = model.decision_function(X_test)
+                        fold_preds.append(1 / (1 + np.exp(-decision_values)))
+                    else:
+                        fold_preds.append(model.predict(X_test))
+                        
             model_pred = np.mean(fold_preds, axis=0).reshape(-1, 1)
             base_predictions.append(model_pred)
         
@@ -276,7 +313,16 @@ class StackingEnsemble:
             # 所有fold模型在测试集上的预测取平均
             fold_preds = []
             for model in self.base_models_trained[model_name]:
-                fold_preds.append(model.predict_proba(X_test)[:, 1])
+                # 处理没有predict_proba方法的模型
+                if hasattr(model, 'predict_proba'):
+                    fold_preds.append(model.predict_proba(X_test)[:, 1])
+                else:
+                    # 使用decision_function或predict作为替代
+                    if hasattr(model, 'decision_function'):
+                        decision_values = model.decision_function(X_test)
+                        fold_preds.append(1 / (1 + np.exp(-decision_values)))
+                    else:
+                        fold_preds.append(model.predict(X_test))
             
             y_pred_prob = np.mean(fold_preds, axis=0)
             y_pred = (y_pred_prob > 0.5).astype(int)
@@ -350,10 +396,11 @@ def load_trained_models():
 
 def get_base_models():
     """获取所有基模型"""
-    from sklearn.svm import LinearSVC
+    from sklearn.svm import SVC
     from sklearn.linear_model import LogisticRegression
     from sklearn.tree import DecisionTreeClassifier
     from xgboost import XGBClassifier
+    import lightgbm as lgbm
     from sklearn.ensemble import (
         RandomForestClassifier,
         AdaBoostClassifier,
@@ -369,7 +416,8 @@ def get_base_models():
         'bc': BaggingClassifier(n_estimators=100, random_state=42),
         'xgb': XGBClassifier(max_depth=7, learning_rate=0.05, n_estimators=500, random_state=42),
         'dt': DecisionTreeClassifier(random_state=42),
-        'svm': LinearSVC(max_iter=50000, random_state=42),
+        #'svm': SVC(probability=True, random_state=42, max_iter=50000),
+        'lgbm': lgbm.LGBMClassifier(num_leaves=31, max_depth=-1, learning_rate=0.05, n_estimators=300, random_state=42),
         'rfc': RandomForestClassifier(n_estimators=100, random_state=42),
         'etc': ExtraTreesClassifier(random_state=42),
         'ada': AdaBoostClassifier(random_state=42)
