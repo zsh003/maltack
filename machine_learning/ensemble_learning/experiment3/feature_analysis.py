@@ -256,8 +256,11 @@ def plot_data_distribution(X, y, feature_names, save_dir='./figures', top_n=5):
     plt.savefig(os.path.join(save_dir, f'top_{top_n}_feature_distribution.png'), dpi=300)
     plt.close()
     
+
+
     # 使用t-SNE降维可视化
-    print("执行t-SNE降维...")
+    #print("执行t-SNE降维...")
+    print("执行PCA降维...")
 
     # 检查并处理无穷大和NaN值
     X_clean = X.copy()
@@ -275,18 +278,31 @@ def plot_data_distribution(X, y, feature_names, save_dir='./figures', top_n=5):
     scaler = StandardScaler()
     X_scaled = scaler.fit_transform(X_clean)
     
-    tsne = TSNE(n_components=2, random_state=42)
-    X_tsne = tsne.fit_transform(X_scaled)
     
+    pca = PCA(n_components=2, random_state=42)
+    X_pca = pca.fit_transform(X_scaled)
     plt.figure(figsize=(10, 8))
-    plt.scatter(X_tsne[y == 0, 0], X_tsne[y == 0, 1], alpha=0.5, label='良性(0)')
-    plt.scatter(X_tsne[y == 1, 0], X_tsne[y == 1, 1], alpha=0.5, label='恶意(1)')
-    plt.title('t-SNE降维可视化')
-    plt.xlabel('t-SNE特征1')
-    plt.ylabel('t-SNE特征2')
+    plt.scatter(X_pca[y == 0, 0], X_pca[y == 0, 1], alpha=0.5, label='良性(0)')
+    plt.scatter(X_pca[y == 1, 0], X_pca[y == 1, 1], alpha=0.5, label='恶意(1)')
+    plt.title('PCA降维可视化')
+    plt.xlabel('PCA特征1')
+    plt.ylabel('PCA特征2')
     plt.legend()
     plt.grid(True, linestyle='--', alpha=0.5)
-    plt.savefig(os.path.join(save_dir, 'tsne_visualization.png'), dpi=300)
+    plt.savefig(os.path.join(save_dir, 'pca_visualization.png'), dpi=300)
     plt.close()
+    
+    # tsne = TSNE(n_components=2, random_state=42)
+    # X_tsne = tsne.fit_transform(X_scaled)
+    # plt.figure(figsize=(10, 8))
+    # plt.scatter(X_tsne[y == 0, 0], X_tsne[y == 0, 1], alpha=0.5, label='良性(0)')
+    # plt.scatter(X_tsne[y == 1, 0], X_tsne[y == 1, 1], alpha=0.5, label='恶意(1)')
+    # plt.title('t-SNE降维可视化')
+    # plt.xlabel('t-SNE特征1')
+    # plt.ylabel('t-SNE特征2')
+    # plt.legend()
+    # plt.grid(True, linestyle='--', alpha=0.5)
+    # plt.savefig(os.path.join(save_dir, 'tsne_visualization.png'), dpi=300)
+    # plt.close()
     
     print("数据分布图表已保存") 
