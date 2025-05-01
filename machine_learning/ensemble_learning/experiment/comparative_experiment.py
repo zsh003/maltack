@@ -266,7 +266,7 @@ def run_experiments():
     histories = []
     all_metrics = []
     cms = []
-    model_names = ['基础CNN模型', '多分支CNN模型', '增强训练CNN模型']
+    model_names = ['增强训练CNN模型', '多分支CNN模型', '基础CNN模型']
     
     # 1. 训练基础CNN模型
     print("\n开始训练基础CNN模型...")

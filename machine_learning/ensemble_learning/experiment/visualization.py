@@ -279,7 +279,7 @@ def create_detailed_visualizations(test_data, result_dir):
         os.makedirs(result_dir)
     
     # 模型名称
-    model_names = ['基础CNN模型', '多分支CNN模型', '增强训练CNN模型']
+    model_names = ['增强训练CNN模型', '多分支CNN模型', '基础CNN模型']
     
     # 加载模型评估指标
     all_metrics = load_model_metrics(result_dir)

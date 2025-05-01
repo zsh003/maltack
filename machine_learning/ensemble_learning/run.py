@@ -139,6 +139,8 @@ def get_fn(idx, fp):
 if __name__ == '__main__':
     print("Preprecess started.")
 
+    """
+
     # 修复MZ和PE头
     os.system("rm -rf ../tmp")
     os.makedirs("../tmp")
@@ -152,12 +154,16 @@ if __name__ == '__main__':
             pbar.update(1)
     for t in table:
         t.join()
-    
 
+    """
+    
+    start_time = time.time()
+
+    
+    """
     # 直方图特征
     os.system("rm -rf ../histogram")
     os.makedirs("../histogram")
-    start_time = time.time()
     with Pool(12) as pool:
         for fp in test_fixed_path:
             pool.apply_async(func=histogram_feature, args=(fp, ))
@@ -166,6 +172,8 @@ if __name__ == '__main__':
     end_time = time.time()
     print("hostogram: {0:.2f}s".format(end_time - start_time))
     start_time = end_time
+
+    """
 
     # PE静态特征
     os.system("rm -rf ../pe_raw")
@@ -182,7 +190,7 @@ if __name__ == '__main__':
     print("pe raw: {0:.2f}s".format(end_time - start_time))
     start_time = end_time
 
-    
+    """
     # 特征工程
     os.system("rm -rf ../feature_engineering")
     os.makedirs("../feature_engineering")
@@ -197,6 +205,6 @@ if __name__ == '__main__':
     with open("../feature_engineering/feature_engineering_features.pkl", 'wb') as f:
         pickle.dump(list(feature_engineering_features), f)
     
-    
+    """
 
     print("Preprecess done.")
