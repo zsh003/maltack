@@ -334,10 +334,10 @@ def analyze_feature_robustness(model, X, y, feature_names, perturbation_ratio=0.
 
 def measure_inference_time(models_dict, X, n_repeats=100, save_dir='./results'):
     """
-    测量不同模型的推理时间
+    测量模型推理时间
     
     参数:
-        models_dict: 模型字典，键为模型名称，值为训练好的模型
+        models_dict: 模型字典
         X: 特征矩阵
         n_repeats: 重复次数
         save_dir: 结果保存目录
@@ -345,17 +345,22 @@ def measure_inference_time(models_dict, X, n_repeats=100, save_dir='./results'):
     返回:
         inference_time_df: 推理时间结果DataFrame
     """
-    print("\n开始测量推理时间...")
+    print("\n开始测量模型推理时间...")
     
     # 创建结果保存目录
     if not os.path.exists(save_dir):
         os.makedirs(save_dir)
     
-    # 推理时间结果
+    # 记录推理时间结果
     inference_time_results = []
     
+    # 数据清洗
+    print("清洗输入数据...")
+    X = np.nan_to_num(X, nan=0.0, posinf=np.finfo(np.float32).max, neginf=np.finfo(np.float32).min)
+    
+    # 测量每个模型的推理时间
     for model_name, model in models_dict.items():
-        print(f"测量 {model_name} 模型的推理时间...")
+        print(f"\n测量 {model_name} 模型的推理时间...")
         
         # 检查模型类型
         has_predict_proba = hasattr(model, 'predict_proba')
@@ -364,17 +369,13 @@ def measure_inference_time(models_dict, X, n_repeats=100, save_dir='./results'):
         if not (has_predict_proba or has_predict):
             print(f"警告：{model_name} 模型没有predict_proba或predict方法，跳过")
             continue
-            
+        
         # 预测函数封装
         def predict_fn(X_data):
             if has_predict_proba:
                 return model.predict_proba(X_data)[:, 1]
             else:
-                preds = model.predict(X_data)
-                # 如果需要，转换为概率
-                if np.max(preds) > 1.0 or np.min(preds) < 0.0:
-                    return 1.0 / (1.0 + np.exp(-preds))
-                return preds
+                return model.predict(X_data)
         
         # 预热
         _ = predict_fn(X[:10])
@@ -404,14 +405,13 @@ def measure_inference_time(models_dict, X, n_repeats=100, save_dir='./results'):
         }
         inference_time_results.append(result)
     
-    # 创建结果DataFrame
+    # 创建推理时间结果DataFrame
     inference_time_df = pd.DataFrame(inference_time_results)
     
     # 保存结果
     inference_time_df.to_csv(os.path.join(save_dir, 'inference_time.csv'), index=False)
     
-    print("\n推理时间分析结果:")
-    print(inference_time_df)
+    print("\n模型推理时间测量完成，结果已保存")
     
     return inference_time_df
 
