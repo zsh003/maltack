@@ -30,10 +30,10 @@ graph TD
 
 ### 5.1.1 子模型并行训练  
 本层由三路并行分类器组成，分别基于PE样本的三类特征空间并行预测：  
-- **直方图特征（512维）**：输入512维直方图向量，使用CNN网络进行分类。网络结构：Reshape(32×16×1)→Conv2D(60,(2,2),ReLU)→MaxPool→Conv2D(200,(2,2),ReLU)→MaxPool→Flatten→Dense(500,ReLU)→Dropout(0.2)→Dense(1,Sigmoid)。训练时采用EarlyStopping(patience=6)和ReduceLROnPlateau(patience=4,factor=0.5)，输出概率$p_{CNN}$。  
-- **静态结构化特征（967维）**：输入PE静态结构化特征（Section信息、HeaderInfo、ExportsInfo、SectionInfo等共967维），使用RandomForestClassifier(n_estimators=100, random_state=8)进行分类，输出概率$p_{RF}$。  
-- **特征工程综合特征（56维）**：输入基于YARA、字符串匹配、Opcode统计等56维特征，使用LightGBM(0.01学习率、num_leaves=8、max_depth=3等超参)进行分类，输出概率$p_{LGB}$。  
-并行训练与预测流程在`stacking_train.py`（训练阶段）和`test.py`（预测阶段）中通过Python多进程(Pool)加速实现，分别生成训练集OOF预测和测试集并行预测结果。
+- **直方图特征（512维）**：输入512维直方图向量，使用CNN网络进行分类。网络结构：Reshape(32×16×1)→Conv2D(60,(2,2),ReLU)→MaxPool→Conv2D(200,(2,2),ReLU)→MaxPool→Flatten→Dense(500,ReLU)→Dropout(0.2)→Dense(1,Sigmoid)。训练时采用EarlyStopping(patience=6)和ReduceLROnPlateau(patience=4,factor=0.5)，输出特征向量。  
+- **静态结构化特征（967维）**：输入PE静态结构化特征（Section信息、HeaderInfo、ExportsInfo、SectionInfo等共967维），使用RandomForestClassifier(n_estimators=100, random_state=8)进行分类，输出特征向量。  
+- **特征工程综合特征（56维）**：输入基于YARA、字符串匹配、Opcode统计等56维特征，使用LightGBM(0.01学习率、num_leaves=8、max_depth=3等超参)进行分类，输出特征向量。  
+并行训练与预测流程在`stacking_train.py`（训练阶段）和`test.py`（预测阶段）中通过Python多进程(Pool)加速实现，分别生成训练集特征和测试集并行预测结果。
 
 ```mermaid
 flowchart LR
@@ -47,26 +47,25 @@ flowchart LR
   LGBM --> p_LGB[p_LGB]
 ```
 
-在此流程中，首先对PE样本提取三类特征：直方图特征、静态结构化特征和特征工程综合特征。每类特征分别输入到对应的模型中进行预测：CNN用于直方图特征，随机森林用于静态特征，LightGBM用于特征工程特征。通过Python多进程技术实现并行预测，提升计算效率。每个模型输出的概率向量将作为后续Stacking元模型的输入。
+在此流程中，首先对PE样本提取三类特征：直方图特征、静态结构化特征和特征工程综合特征。每类特征分别输入到对应的模型中进行预测：CNN用于直方图特征，随机森林用于静态特征，LightGBM用于特征工程特征。通过Python多进程技术实现并行预测，提升计算效率。每个模型输出的特征向量将作为后续Stacking元模型的输入。
 
 ### 5.1.2 Stacking元模型构建  
-在第二层使用Stacking策略，将第一层子模型输出的训练集OOF预测和测试集平均预测拼接为$(N,3)$元特征。流程如下：  
-1. 从`../oof/raw_his_feature.pkl`、`../oof/raw_feature_stacking_train_5.pkl`、`../oof/feature_engineerin_train.pkl`中加载三类OOF训练特征；  
-2. 采用5折交叉验证，对每折的训练子集训练基模型并对验证子集生成概率，汇总得到完整训练集的OOF特征，在测试集上取各折概率平均值；  
-3. 将三路基模型的OOF特征堆叠后，使用LogisticRegression(L2, C=1.0)和RandomForest(n_estimators=200, max_depth=10)训练元模型；  
+在第二层使用Stacking策略，将第一层子模型输出的训练集特征和测试集特征拼接为$(N,3)$元特征。流程如下：  
+1. 从`../oof/raw_his_feature.pkl`、`../oof/raw_feature_stacking_train_5.pkl`、`../oof/feature_engineerin_train.pkl`中加载三类训练特征；  
+2. 直接将三类特征进行堆叠，形成新的训练集特征矩阵；  
+3. 将堆叠后的特征输入到LogisticRegression(L2, C=1.0)和RandomForest(n_estimators=200, max_depth=10)中进行元模型训练；  
 4. 在`stacking_train.py`中完成模型训练并保存至`../models/lr_rfc.pkl`。
 
 ```mermaid
 flowchart TD
-  oof1[加载OOF: raw_his_feature.pkl] --> concat[拼接元特征Nx3]
-  oof2[加载OOF: raw_feature_stacking_train_5.pkl] --> concat
-  oof3[加载OOF: feature_engineerin_train.pkl] --> concat
-  concat --> cv5[5折交叉验证]
-  cv5 --> TrainMeta[训练LR & RF元模型]
+  feature1[加载特征: raw_his_feature.pkl] --> concat[拼接特征 Nx3]
+  feature2[加载特征: raw_feature_stacking_train_5.pkl] --> concat
+  feature3[加载特征: feature_engineerin_train.pkl] --> concat
+  concat --> TrainMeta[训练LR & RF元模型]
   TrainMeta --> SaveModel[保存模型至 lr_rfc.pkl]
 ```
 
-在Stacking元模型构建中，首先从不同的特征文件中加载训练集的OOF特征。通过5折交叉验证，确保每个基模型在未见过的验证集上生成预测概率，避免信息泄露。将这些概率拼接为元特征矩阵，输入到Logistic Regression和Random Forest中进行训练，形成最终的元模型。训练完成后，模型被保存以供后续使用。
+在Stacking元模型构建中，首先从不同的特征文件中加载训练集的特征。直接将这些特征进行堆叠，形成新的特征矩阵，输入到Logistic Regression和Random Forest中进行训练，形成最终的元模型。训练完成后，模型被保存以供后续使用。
 
 ### 5.1.3 加权融合策略  
 第三层加载LogisticRegression和RandomForest元模型，在`test.py`中执行：  
@@ -92,36 +91,20 @@ flowchart LR
 
 ## 5.2 Stacking集成方案细节
 
-### 5.2.1 OOF预测生成策略  
-为避免信息泄露，对训练集进行K=5折划分。每折基模型仅在4折训练，向第5折预测并收集概率，直至所有折完成。
+### 5.2.1 特征堆叠策略  
+在训练集上直接将三类特征进行堆叠，形成新的特征矩阵，作为元模型的输入。
 
 ```mermaid
 flowchart TD
-  Data[原始训练集] --> KFold[5折划分]
-  KFold --> Fold1Train[折1: 模型训练]
-  KFold --> Fold1Val[折1: 模型验证]
-  Fold1Train --> BaseModel[训练基模型]
-  BaseModel --> Fold1Pred[预测验证集]
-  Fold1Pred --> Collect[收集OOF预测]
-  %% 重复至折5后 %%
-  Collect --> OOF[完整训练集OOF特征]
-```
-
-在OOF预测生成策略中，训练集被划分为5个折叠。每个折叠中，基模型在4个折叠上进行训练，并在剩余的1个折叠上进行预测。通过这种方式，确保每个样本的预测结果来自未见过该样本的模型，避免信息泄露。最终，所有折叠的预测结果被收集，形成完整的训练集OOF特征。
-
-### 5.2.2 元特征构造与融合形式  
-合并三类子模型在测试集上的平均概率与训练集的OOF概率，构成$(N,3)$矩阵，作为元模型输入。
-
-```mermaid
-flowchart LR
-  TrainOOF[训练集OOF特征] --> StackMat[拼接 Nx3]
-  TestAvg[测试集平均预测] --> StackMat
+  Data1[直方图特征] --> StackMat[特征堆叠 Nx3]
+  Data2[静态特征] --> StackMat
+  Data3[特征工程特征] --> StackMat
   StackMat --> MetaInput[作为元模型输入]
 ```
 
-在元特征构造与融合形式中，训练集的OOF特征与测试集的平均预测概率被合并为一个矩阵。这个矩阵作为元模型的输入，提供了不同子模型的综合信息，帮助元模型更好地进行分类决策。
+在特征堆叠策略中，直接将三类特征进行堆叠，形成新的特征矩阵。这个矩阵作为元模型的输入，提供了不同子模型的综合信息，帮助元模型更好地进行分类决策。
 
-### 5.2.3 元模型训练与正则化  
+### 5.2.2 元模型训练与正则化  
 LogisticRegression使用L2正则化防止过拟合；RandomForest采用Out‐Of‐Bag评价并调整树深度。
 
 ```mermaid
@@ -134,7 +117,7 @@ flowchart LR
 
 在元模型训练与正则化中，Logistic Regression通过L2正则化来防止过拟合，而Random Forest则通过Out-Of-Bag评价来调整树的深度。两种方法都旨在提高模型的泛化能力，确保在未见过的数据上也能保持良好的性能。
 
-### 5.2.4 验证与对比  
+### 5.2.3 验证与对比  
 通过ROC曲线(AUC)、Precision‐Recall曲线与混淆矩阵对比单一元模型与Stacking性能，证明Stacking在查全与查准之间取得更优平衡。
 
 ```mermaid
