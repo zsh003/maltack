@@ -429,13 +429,15 @@ print(raw_obj)
 ```
 
 ```python
-{'entry': '.text', 
+{
+ 'entry': '.text', 
  'sections': [
      {'name': '.text', 'size': 502784, 'entropy': 7.8772955321013445, 'vsize': 502730, 'props': ['CNT_CODE', 'MEM_EXECUTE', 'MEM_READ']}, 
      {'name': '.rdata', 'size': 118272, 'entropy': 7.359519722739576, 'vsize': 118258, 'props': ['CNT_INITIALIZED_DATA', 'MEM_READ']}, 
      {'name': '.data', 'size': 675840, 'entropy': 3.2998353275291605, 'vsize': 683104, 'props': ['CNT_INITIALIZED_DATA', 'MEM_READ', 'MEM_WRITE']}, 
      {'name': '.reloc', 'size': 22528, 'entropy': 5.653888730136691, 'vsize': 22392, 'props': ['CNT_INITIALIZED_DATA', 'MEM_DISCARDABLE', 'MEM_READ']}
- ]}
+ ]
+}
 ```
 
 ```python
